@@ -3,15 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&display=swap"
+      rel="stylesheet"
+    />
     <title>Deep Space Hum Generator</title>
     <style>
       body {
-        background-color: #121212;
-        color: #e0e0e0;
+        background-color: #0c0f12;
+        color: #d2ecf9;
         font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+          "Antonio",
+          -apple-system,
+          sans-serif;
         display: flex;
         flex-direction: column;
+        font-weight: 400;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
@@ -20,57 +29,100 @@
         box-sizing: border-box;
       }
       h1 {
-        font-size: 1.5rem;
-        margin-bottom: 20px;
-        color: #00e676;
+        font-size: 1.3rem;
+        margin-top: 5px;
+        margin-bottom: 25px;
+        color: #4fc3f7;
         text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: bold;
       }
       .card {
-        background: #1e1e1e;
+        background: #0f172a;
         padding: 24px;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        border: 2px solid #2b3a55;
         width: 100%;
         max-width: 400px;
       }
+
+      /* Tactical Bridge Style Button */
       button {
         width: 100%;
         padding: 15px;
-        background: #00e676;
-        color: #121212;
-        border: none;
-        border-radius: 8px;
+        background: #4d94fd;
+        color: #081828;
+        border: 2px solid #081828;
+        border-radius: 9px;
         font-weight: bold;
         font-size: 1.1rem;
+        font-family: inherit;
         cursor: pointer;
         margin-bottom: 25px;
+        letter-spacing: 1px;
+        transition: all 0.15s ease;
       }
       button:active {
         opacity: 0.8;
       }
+
       .control-group {
         margin-bottom: 20px;
       }
       label {
         display: block;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         margin-bottom: 8px;
-        color: #aaa;
+        color: #8fa0c0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
       }
+
+      /* Retro Custom Sliders */
       input[type="range"] {
+        -webkit-appearance: none;
         width: 100%;
-        accent-color: #00e676;
-        margin-top: 5px;
+        height: 6px;
+        background: #1b263b;
+        border-radius: 3px;
+        outline: none;
+        margin-top: 8px;
       }
+
+      /* Webkit (Chrome/Safari/Opera) */
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 24px;
+        border-radius: 2px;
+        background: #4fc3f7;
+        cursor: pointer;
+        box-shadow: 0 0 6px rgba(79, 195, 247, 0.5);
+      }
+
+      /* Firefox */
+      input[type="range"]::-moz-range-thumb {
+        width: 14px;
+        height: 24px;
+        border-radius: 2px;
+        background: #4fc3f7;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 6px rgba(79, 195, 247, 0.5);
+      }
+
       .value-display {
         float: right;
-        color: #00e676;
+        color: #4fc3f7;
+        font-weight: bold;
       }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>🛸 Space Hum Generator</h1>
+      <h1>Engine Hum Simulation</h1>
       <button id="playBtn">START HUM</button>
 
       <div class="control-group">
@@ -83,7 +135,7 @@
 
       <div class="control-group">
         <label
-          >Tremolo Speed (LFO):
+          >Engine Speed:
           <span id="tremSpeedVal" class="value-display">0.5 Hz</span></label
         >
         <input
@@ -98,7 +150,7 @@
 
       <div class="control-group">
         <label
-          >Tremolo Depth:
+          >Engine Thrum:
           <span id="tremDepthVal" class="value-display">25%</span></label
         >
         <input
@@ -113,7 +165,7 @@
 
       <div class="control-group">
         <label
-          >Filter Cutoff:
+          >Engine Hiss
           <span id="filterVal" class="value-display">120 Hz</span></label
         >
         <input
@@ -128,7 +180,7 @@
 
       <div class="control-group">
         <label
-          >Warm Engine Rumble Vol:
+          >Injector Volume Rumble:
           <span id="rumbleVal" class="value-display">20%</span></label
         >
         <input type="range" id="rumble" min="0" max="100" step="1" value="20" />
@@ -136,8 +188,7 @@
 
       <div class="control-group">
         <label
-          >Console Beeps Vol:
-          <span id="beepVal" class="value-display">15%</span></label
+          >Consoles: <span id="beepVal" class="value-display">15%</span></label
         >
         <input
           type="range"
@@ -206,7 +257,7 @@
           parseFloat(document.getElementById("tremDepth").value) / 100;
         lfoDepthGain.gain.value = depthPct * 0.3;
 
-        // 4. Setup Master Gain (Controlled by the top volume slider)
+        // 4. Setup Master Gain
         masterGain = audioCtx.createGain();
         masterGain.gain.value =
           parseFloat(document.getElementById("volume").value) / 100;
@@ -214,11 +265,11 @@
         // 5. Setup Star Trek Warm Engine Rumble (Harmonic Triangle Waves)
         rumbleOsc1 = audioCtx.createOscillator();
         rumbleOsc1.type = "triangle";
-        rumbleOsc1.frequency.value = 60; // 60Hz baseline
+        rumbleOsc1.frequency.value = 60;
 
         rumbleOsc2 = audioCtx.createOscillator();
         rumbleOsc2.type = "triangle";
-        rumbleOsc2.frequency.value = 90; // Harmonic fifth
+        rumbleOsc2.frequency.value = 90;
 
         rumbleGainNode = audioCtx.createGain();
         const rumbleVol =
@@ -231,13 +282,12 @@
 
         rumbleOsc1.connect(rumbleGainNode);
         rumbleOsc2.connect(rumbleGainNode);
-        rumbleGainNode.connect(filter1); // Send warm rumble through the filters
+        rumbleGainNode.connect(filter1);
 
         filter1.connect(filter2);
         filter2.connect(masterGain);
         masterGain.connect(audioCtx.destination);
 
-        // LFO -> Depth -> Tremolo Gain's Volume parameter
         tremoloLFO.connect(lfoDepthGain);
         lfoDepthGain.connect(tremoloGain.gain);
 
@@ -247,7 +297,6 @@
         rumbleOsc1.start();
         rumbleOsc2.start();
 
-        // Start the ambient console beep scheduler
         startBeepScheduler();
       }
 
@@ -257,7 +306,6 @@
           document.getElementById("beepVolume").value,
         );
 
-        // Skip playing completely if volume is slider is down at zero
         if (!audioCtx || audioCtx.state !== "running" || beepVolPct === 0)
           return;
 
@@ -266,17 +314,15 @@
 
         osc.type = "triangle";
 
-        // Cozy, warm sci-fi tones (pentatonic/ambient intervals)
+        // Cozy, warm sci-fi tones
         const pitches = [932, 1396];
         const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
         osc.frequency.value = randomPitch;
 
         const now = audioCtx.currentTime;
 
-        // Map the 0-100% slider to a comfortable, non-piercing absolute gain limit (max 0.05)
         const targetGain = (beepVolPct / 100) * 0.05;
 
-        // Fast attack, slow natural decay envelope
         beepGain.gain.setValueAtTime(0, now);
         beepGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
         beepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
@@ -288,18 +334,15 @@
         osc.stop(now + 0.2);
       }
 
-      // Randomly schedules single or double-beeps to mimic real computer traffic
       function startBeepScheduler() {
         if (beepTimer) clearTimeout(beepTimer);
 
-        // Schedule next trigger randomly between 4 and 8 seconds
         const delay = 4000 + Math.random() * 4000;
 
         beepTimer = setTimeout(() => {
           if (isPlaying) {
             playConsoleBeep();
 
-            // 40% chance of a double "chirp-chirp" beep
             if (Math.random() < 0.4) {
               setTimeout(playConsoleBeep, 180);
             }
@@ -308,7 +351,7 @@
         }, delay);
       }
 
-      // UI Interactions (Corrected to handle Browser suspension instantly!)
+      // UI Interactions with dynamic state colors (Dark blue -> Light cyan)
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
@@ -317,13 +360,15 @@
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
             this.textContent = "STOP HUM";
-            this.style.background = "#ff1744";
+            this.style.background = "#78fbc8";
+            this.style.color = "#0f172a";
             isPlaying = true;
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
             this.textContent = "START HUM";
-            this.style.background = "#00e676";
+            this.style.background = "#4fc3f7";
+            this.style.color = "#081828";
             isPlaying = false;
           });
         }
