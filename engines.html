@@ -66,27 +66,6 @@
         float: right;
         color: #00e676;
       }
-
-      /* Stylized Checkbox for Console Beeps */
-      .checkbox-container {
-        display: flex;
-        align-items: center;
-        user-select: none;
-        cursor: pointer;
-        font-size: 0.95rem;
-        color: #e0e0e0;
-        margin-top: 10px;
-        background: #252525;
-        padding: 12px;
-        border-radius: 8px;
-      }
-      .checkbox-container input {
-        margin-right: 12px;
-        width: 18px;
-        height: 18px;
-        accent-color: #00e676;
-        cursor: pointer;
-      }
     </style>
   </head>
   <body>
@@ -155,10 +134,20 @@
         <input type="range" id="rumble" min="0" max="100" step="1" value="20" />
       </div>
 
-      <label class="checkbox-container">
-        <input type="checkbox" id="beepsEnabled" />
-        <span>Enable Ambient Console Beeps</span>
-      </label>
+      <div class="control-group">
+        <label
+          >Console Beeps Vol:
+          <span id="beepVal" class="value-display">15%</span></label
+        >
+        <input
+          type="range"
+          id="beepVolume"
+          min="0"
+          max="100"
+          step="1"
+          value="15"
+        />
+      </div>
     </div>
 
     <script>
@@ -166,7 +155,7 @@
       let isPlaying = false;
 
       // Audio Nodes
-      let noiseSource, tremoloLFO, tremoloGain, masterGain;
+      let noiseSource, tremoloLFO, tremoloGain, lfoDepthGain, masterGain;
       let filter1, filter2;
       let rumbleOsc1, rumbleOsc2, rumbleGainNode;
       let beepTimer = null;
@@ -212,7 +201,7 @@
           document.getElementById("tremSpeed").value,
         );
 
-        const lfoDepthGain = audioCtx.createGain();
+        lfoDepthGain = audioCtx.createGain();
         const depthPct =
           parseFloat(document.getElementById("tremDepth").value) / 100;
         lfoDepthGain.gain.value = depthPct * 0.3;
@@ -264,11 +253,12 @@
 
       // --- SYNTHESIZE CONSOLE BEEPS ---
       function playConsoleBeep() {
-        if (
-          !audioCtx ||
-          audioCtx.state !== "running" ||
-          !document.getElementById("beepsEnabled").checked
-        )
+        const beepVolPct = parseFloat(
+          document.getElementById("beepVolume").value,
+        );
+
+        // Skip playing completely if volume is slider is down at zero
+        if (!audioCtx || audioCtx.state !== "running" || beepVolPct === 0)
           return;
 
         const osc = audioCtx.createOscillator();
@@ -283,14 +273,15 @@
 
         const now = audioCtx.currentTime;
 
+        // Map the 0-100% slider to a comfortable, non-piercing absolute gain limit (max 0.05)
+        const targetGain = (beepVolPct / 100) * 0.05;
+
         // Fast attack, slow natural decay envelope
         beepGain.gain.setValueAtTime(0, now);
-        // Kept extremely quiet (0.015) so it hides gently under the engine hum
-        beepGain.gain.linearRampToValueAtTime(0.007, now + 0.01);
+        beepGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
         beepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
 
         osc.connect(beepGain);
-        // Connect to master gain so its overall volume scales with the main slider
         beepGain.connect(masterGain);
 
         osc.start(now);
@@ -305,7 +296,7 @@
         const delay = 4000 + Math.random() * 4000;
 
         beepTimer = setTimeout(() => {
-          if (isPlaying && document.getElementById("beepsEnabled").checked) {
+          if (isPlaying) {
             playConsoleBeep();
 
             // 40% chance of a double "chirp-chirp" beep
@@ -317,23 +308,24 @@
         }, delay);
       }
 
-      // UI Interactions
+      // UI Interactions (Corrected to handle Browser suspension instantly!)
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
-          this.textContent = "STOP HUM";
-          this.style.background = "#ff1744";
-          isPlaying = true;
-        } else if (audioCtx.state === "suspended") {
-          audioCtx.resume();
-          this.textContent = "STOP HUM";
-          this.style.background = "#ff1744";
-          isPlaying = true;
+        }
+
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().then(() => {
+            this.textContent = "STOP HUM";
+            this.style.background = "#ff1744";
+            isPlaying = true;
+          });
         } else if (audioCtx.state === "running") {
-          audioCtx.suspend();
-          this.textContent = "START HUM";
-          this.style.background = "#00e676";
-          isPlaying = false;
+          audioCtx.suspend().then(() => {
+            this.textContent = "START HUM";
+            this.style.background = "#00e676";
+            isPlaying = false;
+          });
         }
       });
 
@@ -365,6 +357,13 @@
         .addEventListener("input", function (e) {
           document.getElementById("tremDepthVal").textContent =
             e.target.value + "%";
+          if (lfoDepthGain) {
+            const depthPct = parseFloat(e.target.value) / 100;
+            lfoDepthGain.gain.setValueAtTime(
+              depthPct * 0.3,
+              audioCtx.currentTime,
+            );
+          }
         });
 
       document.getElementById("filter").addEventListener("input", function (e) {
@@ -384,6 +383,12 @@
           rumbleGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
         }
       });
+
+      document
+        .getElementById("beepVolume")
+        .addEventListener("input", function (e) {
+          document.getElementById("beepVal").textContent = e.target.value + "%";
+        });
     </script>
   </body>
 </html>
