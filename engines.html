@@ -23,6 +23,7 @@
         font-size: 1.5rem;
         margin-bottom: 20px;
         color: #00e676;
+        text-align: center;
       }
       .card {
         background: #1e1e1e;
@@ -65,12 +66,41 @@
         float: right;
         color: #00e676;
       }
+
+      /* Stylized Checkbox for Console Beeps */
+      .checkbox-container {
+        display: flex;
+        align-items: center;
+        user-select: none;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: #e0e0e0;
+        margin-top: 10px;
+        background: #252525;
+        padding: 12px;
+        border-radius: 8px;
+      }
+      .checkbox-container input {
+        margin-right: 12px;
+        width: 18px;
+        height: 18px;
+        accent-color: #00e676;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
     <div class="card">
       <h1>🛸 Space Hum Generator</h1>
       <button id="playBtn">START HUM</button>
+
+      <div class="control-group">
+        <label
+          >Master Volume:
+          <span id="volVal" class="value-display">50%</span></label
+        >
+        <input type="range" id="volume" min="0" max="100" step="1" value="50" />
+      </div>
 
       <div class="control-group">
         <label
@@ -119,11 +149,16 @@
 
       <div class="control-group">
         <label
-          >Dissonant Rumble Vol:
+          >Warm Engine Rumble Vol:
           <span id="rumbleVal" class="value-display">20%</span></label
         >
         <input type="range" id="rumble" min="0" max="100" step="1" value="20" />
       </div>
+
+      <label class="checkbox-container">
+        <input type="checkbox" id="beepsEnabled" />
+        <span>Enable Ambient Console Beeps</span>
+      </label>
     </div>
 
     <script>
@@ -134,11 +169,12 @@
       let noiseSource, tremoloLFO, tremoloGain, masterGain;
       let filter1, filter2;
       let rumbleOsc1, rumbleOsc2, rumbleGainNode;
+      let beepTimer = null;
 
       function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // 1. Generate White Noise Buffer (Slightly lowered amplitude to prevent clipping)
+        // 1. Generate White Noise Buffer
         const bufferSize = 2 * audioCtx.sampleRate;
         const noiseBuffer = audioCtx.createBuffer(
           1,
@@ -147,14 +183,14 @@
         );
         const output = noiseBuffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
-          output[i] = (Math.random() * 2 - 1) * 0.5; // Lowered baseline noise amplitude
+          output[i] = (Math.random() * 2 - 1) * 0.5;
         }
 
         noiseSource = audioCtx.createBufferSource();
         noiseSource.buffer = noiseBuffer;
         noiseSource.loop = true;
 
-        // 2. Setup Filters (These will now filter BOTH the noise and the rumble)
+        // 2. Cascade 2 Lowpass Filters
         filter1 = audioCtx.createBiquadFilter();
         filter2 = audioCtx.createBiquadFilter();
 
@@ -168,7 +204,7 @@
 
         // 3. Setup Tremolo LFO & Tremolo Gain Node
         tremoloGain = audioCtx.createGain();
-        tremoloGain.gain.value = 0.8; // Lowered default to preserve headroom
+        tremoloGain.gain.value = 0.8;
 
         tremoloLFO = audioCtx.createOscillator();
         tremoloLFO.type = "sine";
@@ -179,42 +215,35 @@
         const lfoDepthGain = audioCtx.createGain();
         const depthPct =
           parseFloat(document.getElementById("tremDepth").value) / 100;
-        lfoDepthGain.gain.value = depthPct * 0.3; // Gentle volume modulation
+        lfoDepthGain.gain.value = depthPct * 0.3;
 
-        // 4. Setup Master Gain (Defaulting to a safe level, adjusted by master slider)
+        // 4. Setup Master Gain (Controlled by the top volume slider)
         masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0.5; // Starts at 50% to prevent clipping, adjustable by UI
+        masterGain.gain.value =
+          parseFloat(document.getElementById("volume").value) / 100;
 
         // 5. Setup Star Trek Warm Engine Rumble (Harmonic Triangle Waves)
-        // TNG uses a heavy hum around 60Hz. We use 60Hz and 90Hz (a perfect fifth)
-        // for a rich, warm, stable chord instead of unstable 1950s beating.
         rumbleOsc1 = audioCtx.createOscillator();
-        rumbleOsc1.type = "triangle"; // Triangle waves have a warmer, rounder character
-        rumbleOsc1.frequency.value = 60;
+        rumbleOsc1.type = "triangle";
+        rumbleOsc1.frequency.value = 60; // 60Hz baseline
 
         rumbleOsc2 = audioCtx.createOscillator();
         rumbleOsc2.type = "triangle";
-        rumbleOsc2.frequency.value = 90;
+        rumbleOsc2.frequency.value = 90; // Harmonic fifth
 
         rumbleGainNode = audioCtx.createGain();
         const rumbleVol =
           parseFloat(document.getElementById("rumble").value) / 100;
-        rumbleGainNode.gain.value = rumbleVol * 0.3; // Low default volume to keep clean headroom
+        rumbleGainNode.gain.value = rumbleVol * 0.3;
 
         // --- PATCH ROUTING ---
-
-        // Connect White Noise to Tremolo first
         noiseSource.connect(tremoloGain);
-
-        // Connect the Tremolo output AND the Low Rumble oscillators into the Filter chain
-        // Filtering the oscillators makes them sound incredibly deep and heavy, like real vents.
         tremoloGain.connect(filter1);
 
         rumbleOsc1.connect(rumbleGainNode);
         rumbleOsc2.connect(rumbleGainNode);
-        rumbleGainNode.connect(filter1); // Send rumble through the lowpass filters
+        rumbleGainNode.connect(filter1); // Send warm rumble through the filters
 
-        // Route filtered mix to Master Gain -> Output
         filter1.connect(filter2);
         filter2.connect(masterGain);
         masterGain.connect(audioCtx.destination);
@@ -228,6 +257,64 @@
         tremoloLFO.start();
         rumbleOsc1.start();
         rumbleOsc2.start();
+
+        // Start the ambient console beep scheduler
+        startBeepScheduler();
+      }
+
+      // --- SYNTHESIZE CONSOLE BEEPS ---
+      function playConsoleBeep() {
+        if (
+          !audioCtx ||
+          audioCtx.state !== "running" ||
+          !document.getElementById("beepsEnabled").checked
+        )
+          return;
+
+        const osc = audioCtx.createOscillator();
+        const beepGain = audioCtx.createGain();
+
+        osc.type = "triangle";
+
+        // Cozy, warm sci-fi tones (pentatonic/ambient intervals)
+        const pitches = [932, 1396];
+        const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
+        osc.frequency.value = randomPitch;
+
+        const now = audioCtx.currentTime;
+
+        // Fast attack, slow natural decay envelope
+        beepGain.gain.setValueAtTime(0, now);
+        // Kept extremely quiet (0.015) so it hides gently under the engine hum
+        beepGain.gain.linearRampToValueAtTime(0.007, now + 0.01);
+        beepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+
+        osc.connect(beepGain);
+        // Connect to master gain so its overall volume scales with the main slider
+        beepGain.connect(masterGain);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+      }
+
+      // Randomly schedules single or double-beeps to mimic real computer traffic
+      function startBeepScheduler() {
+        if (beepTimer) clearTimeout(beepTimer);
+
+        // Schedule next trigger randomly between 4 and 8 seconds
+        const delay = 4000 + Math.random() * 4000;
+
+        beepTimer = setTimeout(() => {
+          if (isPlaying && document.getElementById("beepsEnabled").checked) {
+            playConsoleBeep();
+
+            // 40% chance of a double "chirp-chirp" beep
+            if (Math.random() < 0.4) {
+              setTimeout(playConsoleBeep, 180);
+            }
+          }
+          startBeepScheduler();
+        }, delay);
       }
 
       // UI Interactions
@@ -251,6 +338,16 @@
       });
 
       // Slider Listeners
+      document.getElementById("volume").addEventListener("input", function (e) {
+        document.getElementById("volVal").textContent = e.target.value + "%";
+        if (masterGain) {
+          masterGain.gain.setValueAtTime(
+            parseFloat(e.target.value) / 100,
+            audioCtx.currentTime,
+          );
+        }
+      });
+
       document
         .getElementById("tremSpeed")
         .addEventListener("input", function (e) {
@@ -283,7 +380,7 @@
       document.getElementById("rumble").addEventListener("input", function (e) {
         document.getElementById("rumbleVal").textContent = e.target.value + "%";
         if (rumbleGainNode) {
-          const vol = (parseFloat(e.target.value) / 100) * 0.3; // Scaled to safe volume limits
+          const vol = (parseFloat(e.target.value) / 100) * 0.3;
           rumbleGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
         }
       });
