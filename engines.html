@@ -9,7 +9,7 @@
       href="https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&display=swap"
       rel="stylesheet"
     />
-    <title>Deep Space Hum Generator</title>
+    <title>Engine Hum Simulator</title>
     <style>
       body {
         background-color: #0c0f12;
@@ -29,7 +29,8 @@
         box-sizing: border-box;
       }
       h1 {
-        font-size: 1.3rem;
+        font-size: 2.3rem !important;
+        font-weight: 700 !important;
         margin-top: 5px;
         margin-bottom: 25px;
         color: #4fc3f7;
@@ -39,7 +40,7 @@
         font-weight: bold;
       }
       .card {
-        background: #0f172a;
+        background: #0a1a2a;
         padding: 24px;
         border-radius: 12px;
         border: 2px solid #2b3a55;
@@ -84,7 +85,7 @@
         -webkit-appearance: none;
         width: 100%;
         height: 6px;
-        background: #1b263b;
+        background: #001020;
         border-radius: 3px;
         outline: none;
         margin-top: 8px;
@@ -97,7 +98,7 @@
         width: 14px;
         height: 24px;
         border-radius: 2px;
-        background: #4fc3f7;
+        background: #7eaffc;
         cursor: pointer;
         box-shadow: 0 0 6px rgba(79, 195, 247, 0.5);
       }
@@ -123,15 +124,7 @@
   <body>
     <div class="card">
       <h1>Engine Hum Simulation</h1>
-      <button id="playBtn">START HUM</button>
-
-      <div class="control-group">
-        <label
-          >Master Volume:
-          <span id="volVal" class="value-display">50%</span></label
-        >
-        <input type="range" id="volume" min="0" max="100" step="1" value="50" />
-      </div>
+      <button id="playBtn">BEGIN SIMULATION</button>
 
       <div class="control-group">
         <label
@@ -165,7 +158,7 @@
 
       <div class="control-group">
         <label
-          >Engine Hiss
+          >Engine Hiss:
           <span id="filterVal" class="value-display">120 Hz</span></label
         >
         <input
@@ -181,14 +174,14 @@
       <div class="control-group">
         <label
           >Injector Volume Rumble:
-          <span id="rumbleVal" class="value-display">20%</span></label
+          <span id="rumbleVal" class="value-display">12%</span></label
         >
-        <input type="range" id="rumble" min="0" max="100" step="1" value="20" />
+        <input type="range" id="rumble" min="0" max="100" step="1" value="12" />
       </div>
 
       <div class="control-group">
         <label
-          >Consoles: <span id="beepVal" class="value-display">15%</span></label
+          >Consoles: <span id="beepVal" class="value-display">0%</span></label
         >
         <input
           type="range"
@@ -196,7 +189,7 @@
           min="0"
           max="100"
           step="1"
-          value="15"
+          value="0"
         />
       </div>
     </div>
@@ -257,10 +250,9 @@
           parseFloat(document.getElementById("tremDepth").value) / 100;
         lfoDepthGain.gain.value = depthPct * 0.3;
 
-        // 4. Setup Master Gain
+        // 4. Setup Master Gain (Locked to 100% volume)
         masterGain = audioCtx.createGain();
-        masterGain.gain.value =
-          parseFloat(document.getElementById("volume").value) / 100;
+        masterGain.gain.value = 1.0;
 
         // 5. Setup Star Trek Warm Engine Rumble (Harmonic Triangle Waves)
         rumbleOsc1 = audioCtx.createOscillator();
@@ -351,22 +343,27 @@
         }, delay);
       }
 
-      // UI Interactions with dynamic state colors (Dark blue -> Light cyan)
+      // Cleaned up toggle logic to handle the initial creation state instantly
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
+          this.textContent = "END SIMULATION";
+          this.style.background = "#78fbc8";
+          this.style.color = "#0f172a";
+          isPlaying = true;
+          return;
         }
 
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
-            this.textContent = "STOP HUM";
+            this.textContent = "END SIMULATION";
             this.style.background = "#78fbc8";
             this.style.color = "#0f172a";
             isPlaying = true;
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
-            this.textContent = "START HUM";
+            this.textContent = "BEGIN SIMULATION";
             this.style.background = "#4fc3f7";
             this.style.color = "#081828";
             isPlaying = false;
@@ -375,16 +372,6 @@
       });
 
       // Slider Listeners
-      document.getElementById("volume").addEventListener("input", function (e) {
-        document.getElementById("volVal").textContent = e.target.value + "%";
-        if (masterGain) {
-          masterGain.gain.setValueAtTime(
-            parseFloat(e.target.value) / 100,
-            audioCtx.currentTime,
-          );
-        }
-      });
-
       document
         .getElementById("tremSpeed")
         .addEventListener("input", function (e) {
