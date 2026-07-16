@@ -31,7 +31,7 @@
 
       body {
         background-color: #090909;
-        color: #d2ecf9;
+        color: #4fc3f7;
         font-family:
           "Antonio",
           -apple-system,
@@ -262,7 +262,7 @@
         <div class="control-group">
           <label
             >Injector Volume Rumble:
-            <span id="rumbleVal" class="value-display">12%</span></label
+            <span id="rumbleVal" class="value-display">7%</span></label
           >
           <input
             type="range"
@@ -270,12 +270,12 @@
             min="0"
             max="100"
             step="1"
-            value="12"
+            value="7"
           />
         </div>
         <div class="control-group">
           <label
-            >Consoles: <span id="beepVal" class="value-display">0%</span></label
+            >Consoles: <span id="beepVal" class="value-display">2%</span></label
           >
           <input
             type="range"
@@ -283,7 +283,7 @@
             min="0"
             max="100"
             step="1"
-            value="0"
+            value="2"
           />
         </div>
       </div>
@@ -446,7 +446,7 @@
         const osc = audioCtx.createOscillator();
         const beepGain = audioCtx.createGain();
 
-        osc.type = "triangle";
+        osc.type = "square";
 
         // Cozy, warm sci-fi tones
         const pitches = [932, 1396];
@@ -459,7 +459,8 @@
 
         beepGain.gain.setValueAtTime(0, now);
         beepGain.gain.linearRampToValueAtTime(targetGain, now + 0.01);
-        beepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18);
+        beepGain.gain.linearRampToValueAtTime(targetGain, now + 0.1);
+        beepGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
 
         osc.connect(beepGain);
         beepGain.connect(masterGain);
@@ -488,8 +489,8 @@
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
-          this.textContent = "END SIMULATION";
-          this.style.background = "#78fbc8";
+          this.textContent = "DISENGAGE SIMULATION";
+          this.style.background = "#883333";
           this.style.color = "#0f172a";
           isPlaying = true;
           return;
@@ -498,7 +499,7 @@
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
             this.textContent = "DISENGAGE SIMULATION";
-            this.style.background = "#78fbc8";
+            this.style.background = "#883333";
             this.style.color = "#0f172a";
             isPlaying = true;
           });
