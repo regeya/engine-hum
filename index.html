@@ -1,71 +1,71 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta
+      name="generator"
+      content="HTML Tidy for HTML5 for Linux version 5.8.0"
+    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Engine Hum Simulator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Oswald:wght@200..700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&amp;family=Oswald:wght@200..700&amp;display=swap"
       rel="stylesheet"
     />
     <style>
+      /* --- GLOBAL REGISTERED CSS PROPERTIES --- */
+      /* These MUST be at the top level of the stylesheet to work properly */
+      @property --captured-length {
+        syntax: "<length>";
+        initial-value: 0px;
+        inherits: true;
+      }
+
+      @property --captured-length2 {
+        syntax: "<length>";
+        initial-value: 0px;
+        inherits: true;
+      }
+
       body {
         background-color: #090909;
         color: #d2ecf9;
         font-family:
-          "Oswald",
+          "Antonio",
           -apple-system,
           sans-serif;
         display: flex;
         flex-direction: column;
-        font-weight: 400;
+        font-weight: 600;
         align-items: center;
         justify-content: center;
         min-height: 100vh;
         margin: 0;
-        padding: 20px;
+        padding: 0;
         box-sizing: border-box;
       }
 
       /* Container to manage overall responsive layout width */
       .app-container {
         width: 100%;
-        max-width: 600px; /* Allows the interface to breathe on wider screens */
+        max-width: 600px;
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      /* Spans 100% of the horizontal container space */
-      h1 {
-        width: 100%;
-        font-size: clamp(
-          1.8rem,
-          5vw,
-          2.8rem
-        ) !important; /* Scales fluidly with screen width */
-        font-weight: 700 !important;
-        margin-top: 5px;
-        margin-bottom: 25px;
-        color: #4fc3f7;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        box-sizing: border-box;
-      }
-
-      /* Flexible card adjustments */
+      /* Establish the card as a container for robust, container-width-based font scaling */
       .card {
         width: 100%;
         box-sizing: border-box;
+        container-type: inline-size;
       }
 
-      /* Tactical Bridge Style Button */
       button {
         width: 100%;
-        padding: 15px;
+        padding: 12px 15px 18px 15px;
         background: #4fc3f7;
         color: #081828;
         border: 2px solid #081828;
@@ -77,6 +77,13 @@
         margin-bottom: 25px;
         letter-spacing: 1px;
         transition: all 0.15s ease;
+
+        /* Force perfect text alignment */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        text-align: center;
       }
       button:active {
         opacity: 0.8;
@@ -97,10 +104,11 @@
       /* Retro Custom Sliders */
       input[type="range"] {
         -webkit-appearance: none;
+        appearance: none;
         width: 100%;
-        height: 10px; /* Slightly taller track to display the border clearly */
+        height: 10px;
         background: #183848;
-        border: 2px solid #090909; /* Matches document background */
+        border: 2px solid #090909;
         border-radius: 4px;
         outline: none;
         margin-top: 8px;
@@ -113,11 +121,10 @@
         appearance: none;
         width: 14px;
         height: 24px;
-        border: 2px solid #090909; /* Matches document background */
+        border: 2px solid #090909;
         border-radius: 12px;
         background: #7eaffc;
         cursor: pointer;
-        box-shadow: 0 0 6px #183848;
         box-sizing: border-box;
       }
 
@@ -125,27 +132,91 @@
       input[type="range"]::-moz-range-thumb {
         width: 14px;
         height: 24px;
-        border: 2px solid #090909; /* Matches document background */
+        border: 2px solid #090909;
         border-radius: 7px;
         background: #4fc3f7;
         cursor: pointer;
-        box-shadow: 0 0 6px #183848;
         box-sizing: border-box;
       }
+      /* 1. Establish the main container context */
+      .text-fit-container {
+        width: 100%;
+        margin: 5px 0 25px;
+      }
 
-      .value-display {
-        float: right;
-        color: #4fc3f7;
-        font-weight: bold;
+      /* 2. Flex wrapper to calculate remaining space */
+      .text-fit {
+        width: 100%;
+      }
+
+      /* Hide the reference text cleanly without removing it from measurement */
+      .text-fit > [aria-hidden="true"] {
+        visibility: hidden;
+        position: absolute;
+        white-space: nowrap;
+        font-size: 1rem;
+      }
+
+      /* 3. The non-hidden element measures its own width */
+      .text-fit > :not([aria-hidden]) {
+        flex-grow: 1;
+        container-type: inline-size;
+      }
+
+      /* 4. The nested span performs the trigonometric ratio scaling */
+      .text-fit > :not([aria-hidden]) > span {
+        --captured-length: 100cqi;
+        --available-space: var(--captured-length);
+      }
+
+      .text-fit > :not([aria-hidden]) > span > span {
+        --captured-length2: 100cqi;
+
+        /* Calculate Ratio: (Available Space) / (Un-shrunk text width) */
+        --ratio: tan(
+          atan2(
+            var(--available-space),
+            var(--available-space) - var(--captured-length2)
+          )
+        );
+
+        /* Multiply the base font-size (1rem) by the calculated ratio */
+        --ideal-size: calc(var(--ratio) * 1rem);
+
+        /* Clamp limits (Max 3rem prevents stretching too large on wider screens) */
+        font-size: clamp(1rem, var(--ideal-size), 3rem);
+        font-weight: 700;
+        color: #50c2f7;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-align: center;
+        white-space: nowrap;
+        display: block;
+        user-select: none;
+
+        #title {
+          display: block;
+          white-space: nowrap;
+          text-align: center;
+          color: #50c2f7;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
       }
     </style>
   </head>
   <body>
     <div class="app-container">
+      <div class="text-fit-container">
+        <div class="text-fit">
+          <!-- The actual visible text that scales -->
+          <span id="title">ENGINE HUM SIMULATION</span>
+          <!-- The reference copy used to measure native, unscaled text width -->
+        </div>
+      </div>
       <div class="card">
-        <h1>Engine Hum Simulation</h1>
         <button id="playBtn">BEGIN SIMULATION</button>
-
         <div class="control-group">
           <label
             >Engine Speed:
@@ -160,7 +231,6 @@
             value="0.5"
           />
         </div>
-
         <div class="control-group">
           <label
             >Engine Thrum:
@@ -175,7 +245,6 @@
             value="25"
           />
         </div>
-
         <div class="control-group">
           <label
             >Engine Hiss:
@@ -190,7 +259,6 @@
             value="120"
           />
         </div>
-
         <div class="control-group">
           <label
             >Injector Volume Rumble:
@@ -205,7 +273,6 @@
             value="12"
           />
         </div>
-
         <div class="control-group">
           <label
             >Consoles: <span id="beepVal" class="value-display">0%</span></label
@@ -221,13 +288,55 @@
         </div>
       </div>
     </div>
-
     <script>
+      function fitText(el) {
+        const parent = el.parentElement;
+
+        // Start at a known size
+        el.style.fontSize = "10px";
+
+        const available = parent.clientWidth;
+        const actual = el.getBoundingClientRect().width;
+
+        const newSize = 10 * (available / actual);
+
+        el.style.fontSize = `${newSize}px`;
+      }
+
+      const title = document.getElementById("title");
+
+      // Wait for the font
+      document.fonts.ready.then(() => {
+        fitText(title);
+      });
+
+      window.addEventListener("resize", () => fitText(title));
+      // Wait for the 'Antonio' font to load before displaying the auto-scaled text
+      if (document.fonts) {
+        document.fonts
+          .load("1em Antonio")
+          .then(() => {
+            document.documentElement.classList.add("fonts-loaded");
+          })
+          .catch(() => {
+            // Fallback: If font fails to load, display anyway
+            document.documentElement.classList.add("fonts-loaded");
+          });
+      } else {
+        // Fallback for extremely old browsers
+        document.documentElement.classList.add("fonts-loaded");
+      }
+
       let audioCtx = null;
       let isPlaying = false;
 
-      // Audio Nodes
-      let noiseSource, tremoloLFO, tremoloGain, lfoDepthGain, masterGain;
+      // Audio Nodes (ADDED: noiseGain)
+      let noiseSource,
+        noiseGain,
+        tremoloLFO,
+        tremoloGain,
+        lfoDepthGain,
+        masterGain;
       let filter1, filter2;
       let rumbleOsc1, rumbleOsc2, rumbleGainNode;
       let beepTimer = null;
@@ -251,6 +360,10 @@
         noiseSource.buffer = noiseBuffer;
         noiseSource.loop = true;
 
+        // ADDED: Dedicated Noise Gain to compensate for lowpass filter volume drop
+        noiseGain = audioCtx.createGain();
+        noiseGain.gain.value = 1.8;
+
         // 2. Cascade 2 Lowpass Filters
         filter1 = audioCtx.createBiquadFilter();
         filter2 = audioCtx.createBiquadFilter();
@@ -265,7 +378,7 @@
 
         // 3. Setup Tremolo LFO & Tremolo Gain Node
         tremoloGain = audioCtx.createGain();
-        tremoloGain.gain.value = 0.8;
+        tremoloGain.gain.value = 0.5;
 
         tremoloLFO = audioCtx.createOscillator();
         tremoloLFO.type = "sine";
@@ -278,7 +391,7 @@
           parseFloat(document.getElementById("tremDepth").value) / 100;
         lfoDepthGain.gain.value = depthPct * 0.3;
 
-        // 4. Setup Master Gain (Locked to 100% volume)
+        // 4. Setup Master Gain
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 1.0;
 
@@ -297,7 +410,8 @@
         rumbleGainNode.gain.value = rumbleVol * 0.3;
 
         // --- PATCH ROUTING ---
-        noiseSource.connect(tremoloGain);
+        noiseSource.connect(noiseGain); // Noise -> Noise Gain
+        noiseGain.connect(tremoloGain); // Noise Gain -> Tremolo
         tremoloGain.connect(filter1);
 
         rumbleOsc1.connect(rumbleGainNode);
@@ -371,7 +485,6 @@
         }, delay);
       }
 
-      // Cleaned up toggle logic to handle the initial creation state instantly
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
@@ -399,13 +512,13 @@
         }
       });
 
-      // Slider Listeners
+      // Slider Listeners (with safety checks if audioCtx has not started)
       document
         .getElementById("tremSpeed")
         .addEventListener("input", function (e) {
           document.getElementById("tremSpeedVal").textContent =
             e.target.value + " Hz";
-          if (tremoloLFO)
+          if (audioCtx && tremoloLFO)
             tremoloLFO.frequency.setValueAtTime(
               parseFloat(e.target.value),
               audioCtx.currentTime,
@@ -417,7 +530,7 @@
         .addEventListener("input", function (e) {
           document.getElementById("tremDepthVal").textContent =
             e.target.value + "%";
-          if (lfoDepthGain) {
+          if (audioCtx && lfoDepthGain) {
             const depthPct = parseFloat(e.target.value) / 100;
             lfoDepthGain.gain.setValueAtTime(
               depthPct * 0.3,
@@ -429,7 +542,7 @@
       document.getElementById("filter").addEventListener("input", function (e) {
         document.getElementById("filterVal").textContent =
           e.target.value + " Hz";
-        if (filter1 && filter2) {
+        if (audioCtx && filter1 && filter2) {
           const freq = parseFloat(e.target.value);
           filter1.frequency.setValueAtTime(freq, audioCtx.currentTime);
           filter2.frequency.setValueAtTime(freq, audioCtx.currentTime);
@@ -438,7 +551,7 @@
 
       document.getElementById("rumble").addEventListener("input", function (e) {
         document.getElementById("rumbleVal").textContent = e.target.value + "%";
-        if (rumbleGainNode) {
+        if (audioCtx && rumbleGainNode) {
           const vol = (parseFloat(e.target.value) / 100) * 0.3;
           rumbleGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
         }
