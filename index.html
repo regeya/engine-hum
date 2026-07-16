@@ -490,7 +490,7 @@
         if (!audioCtx) {
           initAudio();
           this.textContent = "DISENGAGE SIMULATION";
-          this.style.background = "#883333";
+          this.style.background = "#ddeeff";
           this.style.color = "#0f172a";
           isPlaying = true;
           return;
@@ -499,7 +499,7 @@
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
             this.textContent = "DISENGAGE SIMULATION";
-            this.style.background = "#883333";
+            this.style.background = "#ddeeff";
             this.style.color = "#0f172a";
             isPlaying = true;
           });
