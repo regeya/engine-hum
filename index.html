@@ -216,7 +216,7 @@
         </div>
       </div>
       <div class="card">
-        <button id="playBtn">BEGIN SIMULATION</button>
+        <button id="playBtn">ENGAGE SIMULATION</button>
         <div class="control-group">
           <label
             >Engine Speed:
@@ -497,14 +497,14 @@
 
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
-            this.textContent = "END SIMULATION";
+            this.textContent = "DISENGAGE SIMULATION";
             this.style.background = "#78fbc8";
             this.style.color = "#0f172a";
             isPlaying = true;
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
-            this.textContent = "BEGIN SIMULATION";
+            this.textContent = "ENGAGE SIMULATION";
             this.style.background = "#4fc3f7";
             this.style.color = "#081828";
             isPlaying = false;
