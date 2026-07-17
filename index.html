@@ -362,7 +362,7 @@
 
         // ADDED: Dedicated Noise Gain to compensate for lowpass filter volume drop
         noiseGain = audioCtx.createGain();
-        noiseGain.gain.value = 1.8;
+        noiseGain.gain.value = 7.0;
 
         // 2. Cascade 2 Lowpass Filters
         filter1 = audioCtx.createBiquadFilter();
