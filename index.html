@@ -16,7 +16,6 @@
     />
     <style>
       /* --- GLOBAL REGISTERED CSS PROPERTIES --- */
-      /* These MUST be at the top level of the stylesheet to work properly */
       @property --captured-length {
         syntax: "<length>";
         initial-value: 0px;
@@ -43,42 +42,91 @@
         justify-content: center;
         min-height: 100vh;
         margin: 0;
-        padding: 0;
+        /* Dynamic vertical scale context padding */
+        padding: clamp(10px, 4vh, 40px);
         box-sizing: border-box;
+        position: relative;
+        overflow: hidden;
+        --pulse-duration: 2s;
+        --glow-hue: 0deg;
+        --thrum-multiplier: 0.25; /* Controlled dynamically via JS */
       }
 
-      /* Container to manage overall responsive layout width */
+      /* Pulsating Ambient Engine Glow Layer */
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+          circle,
+          rgba(230, 0, 0, 1) 0%,
+          rgba(32, 0, 0, 0.7) 70%
+        );
+        opacity: 0;
+        z-index: -1;
+        pointer-events: none;
+        transition: opacity 0.5s ease;
+        filter: hue-rotate(var(--glow-hue));
+      }
+
+      /* Animated only when simulation is playing AND enabled via toggle */
+      body.pulsing.glow-enabled::before {
+        animation: coreThrum var(--pulse-duration) infinite ease-in-out;
+      }
+
+      /* Maps keyframe peaks dynamically to match the thrum volume math */
+      @keyframes coreThrum {
+        0%,
+        100% {
+          transform: scale(0.95);
+          opacity: calc(var(--thrum-multiplier) * 0.2);
+        }
+        50% {
+          transform: scale(calc(1 + (var(--thrum-multiplier) * 0.15)));
+          opacity: var(--thrum-multiplier);
+        }
+      }
+
+      /* Container adjusts layouts flexibly based on screen heights */
+      /* 1. Simplify the outer app container */
       .app-container {
         width: 100%;
-        max-width: 600px;
         display: flex;
         flex-direction: column;
         align-items: center;
+        z-index: 1;
+        gap: clamp(5px, 2vh, 20px);
       }
 
-      /* Establish the card as a container for robust, container-width-based font scaling */
+      /* 2. Lock the maximum width directly to the card */
       .card {
         width: 100%;
+        max-width: 600px; /* <--- Moved here to anchor the container query layout */
         box-sizing: border-box;
         container-type: inline-size;
+        background-color: #000000;
+        border: 1px solid #222222;
+        border-radius: 20px;
+        padding: clamp(15px, 3.5vh, 35px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
       }
-
       button {
         width: 100%;
-        padding: 12px 15px 18px 15px;
+        padding: clamp(8px, 1.5vh, 14px) 15px clamp(12px, 2vh, 18px) 15px;
         background: #cc9c3c;
         color: #081828;
         border: 2px solid #000000;
         border-radius: 12px;
         font-weight: bold;
-        font-size: 1.8rem;
+        font-size: clamp(1.2rem, 3.5vh, 1.8rem);
         font-family: inherit;
         cursor: pointer;
-        margin-bottom: 25px;
+        margin-bottom: clamp(10px, 2.5vh, 25px);
         letter-spacing: 1px;
         transition: all 0.15s ease;
-
-        /* Force perfect text alignment */
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -90,15 +138,85 @@
       }
 
       .control-group {
-        margin-bottom: 20px;
+        margin-bottom: clamp(8px, 2vh, 20px);
       }
+
+      .sub-panel {
+        margin-top: clamp(10px, 2.5vh, 25px);
+        padding-top: clamp(10px, 2vh, 20px);
+        border-top: 1px dashed #334466;
+      }
+
+      .panel-title {
+        font-size: clamp(0.75rem, 1.5vh, 0.9rem);
+        color: #50c2f7;
+        margin-bottom: clamp(8px, 1.5vh, 15px);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+
+      .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: clamp(8px, 1.5vh, 15px);
+      }
+
+      /* Retro Toggle Switch */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+        flex-shrink: 0;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider-toggle {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #334466;
+        transition: 0.3s;
+        border-radius: 34px;
+        border: 1px solid #090909;
+      }
+      .slider-toggle:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: #ffcc99;
+        transition: 0.3s;
+        border-radius: 50%;
+      }
+      input:checked + .slider-toggle {
+        background-color: #cc9c3c;
+      }
+      input:checked + .slider-toggle:before {
+        transform: translateX(24px);
+        background-color: #081828;
+      }
+
       label {
         display: block;
-        font-size: 0.85rem;
-        margin-bottom: 8px;
+        font-size: clamp(0.7rem, 1.5vh, 0.85rem);
+        margin-bottom: 4px;
         color: #cc9c3c;
         text-transform: uppercase;
         letter-spacing: 1px;
+      }
+
+      .toggle-container label {
+        margin-bottom: 0;
       }
 
       /* Retro Custom Sliders */
@@ -106,21 +224,20 @@
         -webkit-appearance: none;
         appearance: none;
         width: 100%;
-        height: 10px;
+        height: clamp(6px, 1vh, 10px);
         background: #334466;
-        border: 2px solid #090909;
+        border: 1px solid #090909;
         border-radius: 4px;
         outline: none;
-        margin-top: 8px;
+        margin-top: 4px;
         box-sizing: border-box;
       }
 
-      /* Webkit (Chrome/Safari/Opera) */
       input[type="range"]::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
         width: 14px;
-        height: 24px;
+        height: clamp(18px, 2.5vh, 24px);
         border: 2px solid #090909;
         border-radius: 12px;
         background: #ffcc99;
@@ -128,95 +245,76 @@
         box-sizing: border-box;
       }
 
-      /* Firefox */
       input[type="range"]::-moz-range-thumb {
         width: 14px;
-        height: 24px;
+        height: clamp(18px, 2.5vh, 24px);
         border: 2px solid #090909;
         border-radius: 7px;
         background: #f3f4f7;
         cursor: pointer;
         box-sizing: border-box;
       }
-      /* 1. Establish the main container context */
+
+      #glowHue {
+        background: linear-gradient(
+          to right,
+          #ff0000,
+          #ffff00,
+          #00ff00,
+          #00ffff,
+          #0000ff,
+          #ff00ff,
+          #ff0000
+        );
+      }
       .text-fit-container {
         width: 100%;
-        margin: 5px 0 25px;
+        margin-bottom: clamp(15px, 3vh, 30px);
       }
 
-      /* 2. Flex wrapper to calculate remaining space */
       .text-fit {
         width: 100%;
+        display: flex;
+        justify-content: center;
       }
 
-      /* Hide the reference text cleanly without removing it from measurement */
-      .text-fit > [aria-hidden="true"] {
-        visibility: hidden;
-        position: absolute;
-        white-space: nowrap;
-        font-size: 1rem;
-      }
-
-      /* 3. The non-hidden element measures its own width */
-      .text-fit > :not([aria-hidden]) {
-        flex-grow: 1;
-        container-type: inline-size;
-      }
-
-      /* 4. The nested span performs the trigonometric ratio scaling */
-      .text-fit > :not([aria-hidden]) > span {
-        --captured-length: 100cqi;
-        --available-space: var(--captured-length);
-      }
-
-      .text-fit > :not([aria-hidden]) > span > span {
-        --captured-length2: 100cqi;
-
-        /* Calculate Ratio: (Available Space) / (Un-shrunk text width) */
-        --ratio: tan(
-          atan2(
-            var(--available-space),
-            var(--available-space) - var(--captured-length2)
-          )
-        );
-
-        /* Multiply the base font-size (1rem) by the calculated ratio */
-        --ideal-size: calc(var(--ratio) * 1rem);
-
-        /* Clamp limits (Max 3rem prevents stretching too large on wider screens) */
-        font-size: clamp(1rem, var(--ideal-size), 3rem);
+      #title {
+        display: block;
+        white-space: nowrap; /* This is the magic rule that completely prevents wrapping */
+        text-align: center;
+        color: #cc9c3c;
         font-weight: 700;
-        color: #50c2f7;
         text-transform: uppercase;
         letter-spacing: 0.04em;
-        text-align: center;
-        white-space: nowrap;
-        display: block;
         user-select: none;
+      }
 
-        #title {
-          display: block;
-          white-space: nowrap;
-          text-align: center;
-          color: #cc9c3c;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.04em;
-        }
+      .card {
+        /* ... keep all your existing card properties ... */
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease,
+          visibility 0.3s;
+      }
+
+      .card.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0.95);
+        pointer-events: none; /* Prevents clicking invisible elements */
       }
     </style>
   </head>
-  <body>
+  <body class="glow-enabled">
     <div class="app-container">
-      <div class="text-fit-container">
-        <div class="text-fit">
-          <!-- The actual visible text that scales -->
-          <span id="title">ENGINE CORE SIMULATION</span>
-          <!-- The reference copy used to measure native, unscaled text width -->
-        </div>
-      </div>
       <div class="card">
+        <div class="text-fit-container">
+          <div class="text-fit">
+            <span id="title">ENGINE CORE SIMULATION</span>
+          </div>
+        </div>
         <button id="playBtn">ENGAGE SIMULATION</button>
+
         <div class="control-group">
           <label
             >Engine Speed:
@@ -287,51 +385,70 @@
             value="20"
           />
         </div>
+
+        <div class="sub-panel">
+          <div class="panel-title">Visual Customization</div>
+
+          <div class="toggle-container">
+            <label for="glowToggle">Ambient Engine Glow</label>
+            <label class="switch">
+              <input type="checkbox" id="glowToggle" checked />
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label
+              >Glow Core Hue:
+              <span id="glowHueVal" class="value-display">0° (Red)</span></label
+            >
+            <input
+              type="range"
+              id="glowHue"
+              min="0"
+              max="360"
+              step="1"
+              value="0"
+            />
+          </div>
+        </div>
       </div>
     </div>
     <script>
       function fitText(el) {
         const parent = el.parentElement;
-
-        // Start at a known size
         el.style.fontSize = "10px";
-
         const available = parent.clientWidth;
         const actual = el.getBoundingClientRect().width;
-
+        if (actual === 0) return;
         const newSize = 10 * (available / actual);
-
         el.style.fontSize = `${newSize}px`;
       }
 
       const title = document.getElementById("title");
 
-      // Wait for the font
       document.fonts.ready.then(() => {
         fitText(title);
       });
 
       window.addEventListener("resize", () => fitText(title));
-      // Wait for the 'Antonio' font to load before displaying the auto-scaled text
       if (document.fonts) {
         document.fonts
           .load("1em Antonio")
           .then(() => {
             document.documentElement.classList.add("fonts-loaded");
+            fitText(title);
           })
           .catch(() => {
-            // Fallback: If font fails to load, display anyway
             document.documentElement.classList.add("fonts-loaded");
           });
       } else {
-        // Fallback for extremely old browsers
         document.documentElement.classList.add("fonts-loaded");
       }
 
       let audioCtx = null;
       let isPlaying = false;
 
-      // Audio Nodes (ADDED: noiseGain)
       let noiseSource,
         noiseGain,
         tremoloLFO,
@@ -342,10 +459,23 @@
       let rumbleOsc1, rumbleOsc2, rumbleGainNode;
       let beepTimer = null;
 
+      function updateVisualPulseSpeed(hz) {
+        const secondsPerCycle = 1 / parseFloat(hz);
+        document.body.style.setProperty(
+          "--pulse-duration",
+          `${secondsPerCycle}s`,
+        );
+      }
+
+      // Maps the thrum percentage (0-100) directly to CSS variable opacity math
+      function updateVisualPulseAmplitude(depthPercentage) {
+        const factor = parseFloat(depthPercentage) / 100;
+        document.body.style.setProperty("--thrum-multiplier", factor);
+      }
+
       function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // 1. Generate White Noise Buffer
         const bufferSize = 2 * audioCtx.sampleRate;
         const noiseBuffer = audioCtx.createBuffer(
           1,
@@ -361,11 +491,9 @@
         noiseSource.buffer = noiseBuffer;
         noiseSource.loop = true;
 
-        // ADDED: Dedicated Noise Gain to compensate for lowpass filter volume drop
         noiseGain = audioCtx.createGain();
         noiseGain.gain.value = 6.0;
 
-        // 2. Cascade 2 Lowpass Filters
         filter1 = audioCtx.createBiquadFilter();
         filter2 = audioCtx.createBiquadFilter();
 
@@ -377,7 +505,6 @@
           f.Q.value = 0.5;
         });
 
-        // 3. Setup Tremolo LFO & Tremolo Gain Node
         tremoloGain = audioCtx.createGain();
         tremoloGain.gain.value = 0.5;
 
@@ -392,11 +519,9 @@
           parseFloat(document.getElementById("tremDepth").value) / 100;
         lfoDepthGain.gain.value = depthPct * 0.3;
 
-        // 4. Setup Master Gain
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 1.0;
 
-        // 5. Setup Star Trek Warm Engine Rumble (Harmonic Triangle Waves)
         rumbleOsc1 = audioCtx.createOscillator();
         rumbleOsc1.type = "triangle";
         rumbleOsc1.frequency.value = 60;
@@ -410,9 +535,8 @@
           parseFloat(document.getElementById("rumble").value) / 100;
         rumbleGainNode.gain.value = rumbleVol * 0.3;
 
-        // --- PATCH ROUTING ---
-        noiseSource.connect(noiseGain); // Noise -> Noise Gain
-        noiseGain.connect(tremoloGain); // Noise Gain -> Tremolo
+        noiseSource.connect(noiseGain);
+        noiseGain.connect(tremoloGain);
         tremoloGain.connect(filter1);
 
         rumbleOsc1.connect(rumbleGainNode);
@@ -426,7 +550,6 @@
         tremoloLFO.connect(lfoDepthGain);
         lfoDepthGain.connect(tremoloGain.gain);
 
-        // Start everything
         noiseSource.start();
         tremoloLFO.start();
         rumbleOsc1.start();
@@ -435,7 +558,6 @@
         startBeepScheduler();
       }
 
-      // --- SYNTHESIZE CONSOLE BEEPS ---
       function playConsoleBeep() {
         const beepVolPct = parseFloat(
           document.getElementById("beepVolume").value,
@@ -449,13 +571,11 @@
 
         osc.type = "square";
 
-        // Cozy, warm sci-fi tones
         const pitches = [932, 1396];
         const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
         osc.frequency.value = randomPitch;
 
         const now = audioCtx.currentTime;
-
         const targetGain = (beepVolPct / 100) * 0.05;
 
         beepGain.gain.setValueAtTime(0, now);
@@ -487,6 +607,10 @@
         }, delay);
       }
 
+      // Initialize visual engine states to match hardware configuration values on start
+      updateVisualPulseSpeed(document.getElementById("tremSpeed").value);
+      updateVisualPulseAmplitude(document.getElementById("tremDepth").value);
+
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
@@ -494,6 +618,7 @@
           this.style.background = "#fcc19f";
           this.style.color = "#0f172a";
           isPlaying = true;
+          document.body.classList.add("pulsing");
           return;
         }
 
@@ -503,6 +628,7 @@
             this.style.background = "#fcc19f";
             this.style.color = "#0f172a";
             isPlaying = true;
+            document.body.classList.add("pulsing");
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
@@ -510,16 +636,19 @@
             this.style.background = "#cc9c3c";
             this.style.color = "#081828";
             isPlaying = false;
+            document.body.classList.remove("pulsing");
           });
         }
       });
 
-      // Slider Listeners (with safety checks if audioCtx has not started)
       document
         .getElementById("tremSpeed")
         .addEventListener("input", function (e) {
           document.getElementById("tremSpeedVal").textContent =
             e.target.value + " Hz";
+
+          updateVisualPulseSpeed(e.target.value);
+
           if (audioCtx && tremoloLFO)
             tremoloLFO.frequency.setValueAtTime(
               parseFloat(e.target.value),
@@ -532,6 +661,10 @@
         .addEventListener("input", function (e) {
           document.getElementById("tremDepthVal").textContent =
             e.target.value + "%";
+
+          // NEW: Tie visual pulse light opacity to hardware engine depth output!
+          updateVisualPulseAmplitude(e.target.value);
+
           if (audioCtx && lfoDepthGain) {
             const depthPct = parseFloat(e.target.value) / 100;
             lfoDepthGain.gain.setValueAtTime(
@@ -564,6 +697,45 @@
         .addEventListener("input", function (e) {
           document.getElementById("beepVal").textContent = e.target.value + "%";
         });
+
+      document
+        .getElementById("glowToggle")
+        .addEventListener("change", function (e) {
+          if (e.target.checked) {
+            document.body.classList.add("glow-enabled");
+          } else {
+            document.body.classList.remove("glow-enabled");
+          }
+        });
+
+      document
+        .getElementById("glowHue")
+        .addEventListener("input", function (e) {
+          const degrees = e.target.value;
+          let colorName = "Red";
+
+          if (degrees > 20 && degrees <= 70) colorName = "Orange/Yellow";
+          else if (degrees > 70 && degrees <= 160) colorName = "Green";
+          else if (degrees > 160 && degrees <= 200) colorName = "Cyan";
+          else if (degrees > 200 && degrees <= 260) colorName = "Blue";
+          else if (degrees > 260 && degrees <= 320)
+            colorName = "Purple/Magenta";
+
+          document.getElementById("glowHueVal").textContent =
+            `${degrees}° (${colorName})`;
+          document.body.style.setProperty("--glow-hue", `${degrees}deg`);
+        });
+      const card = document.querySelector(".card");
+
+      // 1. Hide/Show the card when clicking the body background
+      document.body.addEventListener("click", () => {
+        card.classList.toggle("hidden");
+      });
+
+      // 2. Prevent clicks inside the card from triggering the body's click event
+      card.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
     </script>
   </body>
 </html>
