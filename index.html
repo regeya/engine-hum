@@ -1,10 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta
-      name="generator"
-      content="HTML Tidy for HTML5 for Linux version 5.8.0"
-    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Engine Core Simulator</title>
@@ -15,19 +11,6 @@
       rel="stylesheet"
     />
     <style>
-      /* --- GLOBAL REGISTERED CSS PROPERTIES --- */
-      @property --captured-length {
-        syntax: "<length>";
-        initial-value: 0px;
-        inherits: true;
-      }
-
-      @property --captured-length2 {
-        syntax: "<length>";
-        initial-value: 0px;
-        inherits: true;
-      }
-
       body {
         background-color: #090909;
         color: #cc9c3d;
@@ -42,56 +25,56 @@
         justify-content: center;
         min-height: 100vh;
         margin: 0;
-        /* Dynamic vertical scale context padding */
         padding: clamp(10px, 4vh, 40px);
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
-        --pulse-duration: 2s;
-        --glow-hue: 0deg;
-        --thrum-multiplier: 0.25; /* Controlled dynamically via JS */
+        --glow-hue: 22deg;
       }
 
       /* Pulsating Ambient Engine Glow Layer */
-      body::before {
-        content: "";
+      #glow-layer {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
+        /* Driven dynamically via JavaScript opacity and transform scaling now */
         background: radial-gradient(
           circle,
-          rgba(230, 0, 0, 1) 0%,
-          rgba(32, 0, 0, 0.7) 70%
+          rgba(255, 0, 0, 0.7) 0%,
+          rgba(230, 0, 0, 0.2) 40%,
+          rgba(64, 0, 0, 0) 80%
         );
         opacity: 0;
-        z-index: -1;
+        z-index: -2;
         pointer-events: none;
         transition: opacity 0.5s ease;
         filter: hue-rotate(var(--glow-hue));
       }
 
-      /* Animated only when simulation is playing AND enabled via toggle */
-      body.pulsing.glow-enabled::before {
-        animation: coreThrum var(--pulse-duration) infinite ease-in-out;
+      body.glow-enabled #glow-layer {
+        /* Base opacity state when simulation is on; real-time pulsing is multiplied on top */
+        display: block;
       }
 
-      /* Maps keyframe peaks dynamically to match the thrum volume math */
-      @keyframes coreThrum {
-        0%,
-        100% {
-          transform: scale(0.95);
-          opacity: calc(var(--thrum-multiplier) * 0.2);
-        }
-        50% {
-          transform: scale(calc(1 + (var(--thrum-multiplier) * 0.15)));
-          opacity: var(--thrum-multiplier);
-        }
+      /* Moving Stars Canvas Layer */
+      #starfield {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.5s ease;
       }
 
-      /* Container adjusts layouts flexibly based on screen heights */
-      /* 1. Simplify the outer app container */
+      body.stars-enabled #starfield {
+        opacity: 1;
+      }
+
       .app-container {
         width: 100%;
         display: flex;
@@ -101,10 +84,9 @@
         gap: clamp(5px, 2vh, 20px);
       }
 
-      /* 2. Lock the maximum width directly to the card */
       .card {
         width: 100%;
-        max-width: 600px; /* <--- Moved here to anchor the container query layout */
+        max-width: 600px;
         box-sizing: border-box;
         container-type: inline-size;
         background-color: #000000;
@@ -112,7 +94,19 @@
         border-radius: 20px;
         padding: clamp(15px, 3.5vh, 35px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease,
+          visibility 0.3s;
       }
+
+      .card.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0.95);
+        pointer-events: none;
+      }
+
       button {
         width: 100%;
         padding: clamp(8px, 1.5vh, 14px) 15px clamp(12px, 2vh, 18px) 15px;
@@ -133,6 +127,7 @@
         line-height: 1;
         text-align: center;
       }
+
       button:active {
         opacity: 0.8;
       }
@@ -162,7 +157,6 @@
         margin-bottom: clamp(8px, 1.5vh, 15px);
       }
 
-      /* Retro Toggle Switch */
       .switch {
         position: relative;
         display: inline-block;
@@ -170,11 +164,13 @@
         height: 26px;
         flex-shrink: 0;
       }
+
       .switch input {
         opacity: 0;
         width: 0;
         height: 0;
       }
+
       .slider-toggle {
         position: absolute;
         cursor: pointer;
@@ -187,6 +183,7 @@
         border-radius: 34px;
         border: 1px solid #090909;
       }
+
       .slider-toggle:before {
         position: absolute;
         content: "";
@@ -198,9 +195,11 @@
         transition: 0.3s;
         border-radius: 50%;
       }
+
       input:checked + .slider-toggle {
         background-color: #cc9c3c;
       }
+
       input:checked + .slider-toggle:before {
         transform: translateX(24px);
         background-color: #081828;
@@ -215,11 +214,7 @@
         letter-spacing: 1px;
       }
 
-      .toggle-container label {
-        margin-bottom: 0;
-      }
-
-      /* Retro Custom Sliders */
+      /* Custom Sliders */
       input[type="range"] {
         -webkit-appearance: none;
         appearance: none;
@@ -267,6 +262,7 @@
           #ff0000
         );
       }
+
       .text-fit-container {
         width: 100%;
         margin-bottom: clamp(15px, 3vh, 30px);
@@ -280,7 +276,7 @@
 
       #title {
         display: block;
-        white-space: nowrap; /* This is the magic rule that completely prevents wrapping */
+        white-space: nowrap;
         text-align: center;
         color: #cc9c3c;
         font-weight: 700;
@@ -288,24 +284,12 @@
         letter-spacing: 0.04em;
         user-select: none;
       }
-
-      .card {
-        /* ... keep all your existing card properties ... */
-        transition:
-          opacity 0.3s ease,
-          transform 0.3s ease,
-          visibility 0.3s;
-      }
-
-      .card.hidden {
-        opacity: 0;
-        visibility: hidden;
-        transform: scale(0.95);
-        pointer-events: none; /* Prevents clicking invisible elements */
-      }
     </style>
   </head>
-  <body class="glow-enabled">
+  <body class="glow-enabled stars-enabled">
+    <div id="glow-layer"></div>
+    <canvas id="starfield"></canvas>
+
     <div class="app-container">
       <div class="card">
         <div class="text-fit-container">
@@ -313,6 +297,7 @@
             <span id="title">ENGINE CORE SIMULATION</span>
           </div>
         </div>
+
         <button id="playBtn">ENGAGE SIMULATION</button>
 
         <div class="control-group">
@@ -329,6 +314,7 @@
             value="0.5"
           />
         </div>
+
         <div class="control-group">
           <label
             >Engine Thrum:
@@ -343,6 +329,7 @@
             value="25"
           />
         </div>
+
         <div class="control-group">
           <label
             >Engine Hiss:
@@ -357,6 +344,7 @@
             value="120"
           />
         </div>
+
         <div class="control-group">
           <label
             >Injector Volume Rumble:
@@ -371,10 +359,10 @@
             value="50"
           />
         </div>
+
         <div class="control-group">
           <label
-            >Consoles:
-            <span id="beepVal" class="value-display">20%</span></label
+            >Consoles: <span id="beepVal" class="value-display">0%</span></label
           >
           <input
             type="range"
@@ -382,7 +370,7 @@
             min="0"
             max="100"
             step="1"
-            value="20"
+            value="0"
           />
         </div>
 
@@ -397,10 +385,20 @@
             </label>
           </div>
 
+          <div class="toggle-container">
+            <label for="starsToggle">Starfield Warp Engine</label>
+            <label class="switch">
+              <input type="checkbox" id="starsToggle" checked />
+              <span class="slider-toggle"></span>
+            </label>
+          </div>
+
           <div class="control-group">
             <label
               >Glow Core Hue:
-              <span id="glowHueVal" class="value-display">0° (Red)</span></label
+              <span id="glowHueVal" class="value-display"
+                >22° (Orange/Yellow)</span
+              ></label
             >
             <input
               type="range"
@@ -408,12 +406,13 @@
               min="0"
               max="360"
               step="1"
-              value="0"
+              value="22"
             />
           </div>
         </div>
       </div>
     </div>
+
     <script>
       function fitText(el) {
         const parent = el.parentElement;
@@ -426,28 +425,16 @@
       }
 
       const title = document.getElementById("title");
+      const glowLayer = document.getElementById("glow-layer");
 
       document.fonts.ready.then(() => {
         fitText(title);
       });
-
       window.addEventListener("resize", () => fitText(title));
-      if (document.fonts) {
-        document.fonts
-          .load("1em Antonio")
-          .then(() => {
-            document.documentElement.classList.add("fonts-loaded");
-            fitText(title);
-          })
-          .catch(() => {
-            document.documentElement.classList.add("fonts-loaded");
-          });
-      } else {
-        document.documentElement.classList.add("fonts-loaded");
-      }
 
       let audioCtx = null;
       let isPlaying = false;
+      let baseTimeOffset = 0; // Tracks manual timeline when context is idle
 
       let noiseSource,
         noiseGain,
@@ -458,20 +445,6 @@
       let filter1, filter2;
       let rumbleOsc1, rumbleOsc2, rumbleGainNode;
       let beepTimer = null;
-
-      function updateVisualPulseSpeed(hz) {
-        const secondsPerCycle = 1 / parseFloat(hz);
-        document.body.style.setProperty(
-          "--pulse-duration",
-          `${secondsPerCycle}s`,
-        );
-      }
-
-      // Maps the thrum percentage (0-100) directly to CSS variable opacity math
-      function updateVisualPulseAmplitude(depthPercentage) {
-        const factor = parseFloat(depthPercentage) / 100;
-        document.body.style.setProperty("--thrum-multiplier", factor);
-      }
 
       function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -505,7 +478,7 @@
           f.Q.value = 0.5;
         });
 
-        tremoloGain = audioCtx.createGain();
+        tremoloGain = audioGain = audioCtx.createGain();
         tremoloGain.gain.value = 0.5;
 
         tremoloLFO = audioCtx.createOscillator();
@@ -562,18 +535,16 @@
         const beepVolPct = parseFloat(
           document.getElementById("beepVolume").value,
         );
-
         if (!audioCtx || audioCtx.state !== "running" || beepVolPct === 0)
           return;
 
         const osc = audioCtx.createOscillator();
         const beepGain = audioCtx.createGain();
-
         osc.type = "square";
 
         const pitches = [932, 1396];
-        const randomPitch = pitches[Math.floor(Math.random() * pitches.length)];
-        osc.frequency.value = randomPitch;
+        osc.frequency.value =
+          pitches[Math.floor(Math.random() * pitches.length)];
 
         const now = audioCtx.currentTime;
         const targetGain = (beepVolPct / 100) * 0.05;
@@ -585,31 +556,21 @@
 
         osc.connect(beepGain);
         beepGain.connect(masterGain);
-
         osc.start(now);
         osc.stop(now + 0.2);
       }
 
       function startBeepScheduler() {
         if (beepTimer) clearTimeout(beepTimer);
-
         const delay = 4000 + Math.random() * 4000;
-
         beepTimer = setTimeout(() => {
           if (isPlaying) {
             playConsoleBeep();
-
-            if (Math.random() < 0.4) {
-              setTimeout(playConsoleBeep, 180);
-            }
+            if (Math.random() < 0.4) setTimeout(playConsoleBeep, 180);
           }
           startBeepScheduler();
         }, delay);
       }
-
-      // Initialize visual engine states to match hardware configuration values on start
-      updateVisualPulseSpeed(document.getElementById("tremSpeed").value);
-      updateVisualPulseAmplitude(document.getElementById("tremDepth").value);
 
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
@@ -618,7 +579,6 @@
           this.style.background = "#fcc19f";
           this.style.color = "#0f172a";
           isPlaying = true;
-          document.body.classList.add("pulsing");
           return;
         }
 
@@ -628,7 +588,6 @@
             this.style.background = "#fcc19f";
             this.style.color = "#0f172a";
             isPlaying = true;
-            document.body.classList.add("pulsing");
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
@@ -636,7 +595,6 @@
             this.style.background = "#cc9c3c";
             this.style.color = "#081828";
             isPlaying = false;
-            document.body.classList.remove("pulsing");
           });
         }
       });
@@ -646,14 +604,12 @@
         .addEventListener("input", function (e) {
           document.getElementById("tremSpeedVal").textContent =
             e.target.value + " Hz";
-
-          updateVisualPulseSpeed(e.target.value);
-
-          if (audioCtx && tremoloLFO)
+          if (audioCtx && tremoloLFO) {
             tremoloLFO.frequency.setValueAtTime(
               parseFloat(e.target.value),
               audioCtx.currentTime,
             );
+          }
         });
 
       document
@@ -661,10 +617,6 @@
         .addEventListener("input", function (e) {
           document.getElementById("tremDepthVal").textContent =
             e.target.value + "%";
-
-          // NEW: Tie visual pulse light opacity to hardware engine depth output!
-          updateVisualPulseAmplitude(e.target.value);
-
           if (audioCtx && lfoDepthGain) {
             const depthPct = parseFloat(e.target.value) / 100;
             lfoDepthGain.gain.setValueAtTime(
@@ -705,6 +657,7 @@
             document.body.classList.add("glow-enabled");
           } else {
             document.body.classList.remove("glow-enabled");
+            glowLayer.style.opacity = 0;
           }
         });
 
@@ -713,7 +666,6 @@
         .addEventListener("input", function (e) {
           const degrees = e.target.value;
           let colorName = "Red";
-
           if (degrees > 20 && degrees <= 70) colorName = "Orange/Yellow";
           else if (degrees > 70 && degrees <= 160) colorName = "Green";
           else if (degrees > 160 && degrees <= 200) colorName = "Cyan";
@@ -725,14 +677,125 @@
             `${degrees}° (${colorName})`;
           document.body.style.setProperty("--glow-hue", `${degrees}deg`);
         });
-      const card = document.querySelector(".card");
 
-      // 1. Hide/Show the card when clicking the body background
+      /* --- PYGAME STARFIELD & HARD-SYNCED ANIMATION LOOP --- */
+      const canvas = document.getElementById("starfield");
+      const ctx = canvas.getContext("2d");
+      const numStars = 200;
+      const stars = [];
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      for (let i = 0; i < numStars; i++) {
+        stars.push({
+          x: Math.random() * canvas.width - canvas.width / 2,
+          y: Math.random() * canvas.height - canvas.height / 2,
+          z: Math.random() * canvas.width,
+          color: `hsl(${200 + Math.random() * 40}, 85%, ${85 + Math.random() * 10}%)`,
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+
+        const currentSpeedSlider = parseFloat(
+          document.getElementById("tremSpeed").value,
+        );
+        const currentDepthSlider =
+          parseFloat(document.getElementById("tremDepth").value) / 100;
+
+        let targetSpeed = isPlaying ? currentSpeedSlider * 4.5 : 0;
+
+        // --- PHASE LOCK PHYSICS ENGINE LOOP ---
+        // Grab timeline from AudioContext clock if live, else fall back to a manual timestamp
+        let timelineClock = audioCtx ? audioCtx.currentTime : baseTimeOffset;
+        if (!isPlaying && !audioCtx) baseTimeOffset += 0.016;
+
+        // Compute a pure mathematical Sine calculation ($1.0$ down to $-1.0$)
+        const rawSine = Math.sin(
+          2 * Math.PI * currentSpeedSlider * timelineClock,
+        );
+
+        // Map sine profile precisely onto visual attributes
+        if (isPlaying && document.body.classList.contains("glow-enabled")) {
+          const depthMultiplier = currentDepthSlider * 0.9;
+          const visualIntensity = 0.45 + rawSine * depthMultiplier * 0.45;
+          const scaleStretch =
+            0.96 + (rawSine + 1) * 0.5 * (currentDepthSlider * 0.08);
+
+          glowLayer.style.opacity = visualIntensity;
+          glowLayer.style.transform = `scale(${scaleStretch})`;
+        } else if (!isPlaying) {
+          glowLayer.style.opacity = 0;
+          glowLayer.style.transform = "scale(1)";
+        }
+
+        // --- PYGAME STARFIELD RENDERER ---
+        for (let i = 0; i < numStars; i++) {
+          let s = stars[i];
+          const pxOld = (s.x / s.z) * cx + cx;
+          const pyOld = (s.y / s.z) * cy + cy;
+
+          s.z -= targetSpeed;
+
+          if (s.z <= 0) {
+            s.x = Math.random() * canvas.width - cx;
+            s.y = Math.random() * canvas.height - cy;
+            s.z = canvas.width;
+            continue;
+          }
+
+          const pxNew = (s.x / s.z) * cx + cx;
+          const pyNew = (s.y / s.z) * cy + cy;
+
+          if (
+            pxNew >= 0 &&
+            pxNew <= canvas.width &&
+            pyNew >= 0 &&
+            pyNew <= canvas.height
+          ) {
+            const size = (1 - s.z / canvas.width) * 2.5;
+            ctx.beginPath();
+            if (targetSpeed > 0.5) {
+              ctx.moveTo(pxOld, pyOld);
+              ctx.lineTo(pxNew, pyNew);
+              ctx.lineWidth = size;
+              ctx.strokeStyle = s.color;
+              ctx.lineCap = "round";
+              ctx.stroke();
+            } else {
+              ctx.arc(pxNew, pyNew, Math.max(0.5, size / 2), 0, Math.PI * 2);
+              ctx.fillStyle = s.color;
+              ctx.fill();
+            }
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+
+      document
+        .getElementById("starsToggle")
+        .addEventListener("change", function (e) {
+          if (e.target.checked) {
+            document.body.classList.add("stars-enabled");
+          } else {
+            document.body.classList.remove("stars-enabled");
+          }
+        });
+
+      const card = document.querySelector(".card");
       document.body.addEventListener("click", () => {
         card.classList.toggle("hidden");
       });
-
-      // 2. Prevent clicks inside the card from triggering the body's click event
       card.addEventListener("click", (e) => {
         e.stopPropagation();
       });
