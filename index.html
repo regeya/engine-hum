@@ -31,7 +31,7 @@
 
       body {
         background-color: #090909;
-        color: #4fc3f7;
+        color: #cc9c3d;
         font-family:
           "Antonio",
           -apple-system,
@@ -66,7 +66,7 @@
       button {
         width: 100%;
         padding: 12px 15px 18px 15px;
-        background: #4fc3f7;
+        background: #cc9c3c;
         color: #081828;
         border: 2px solid #000000;
         border-radius: 12px;
@@ -96,7 +96,7 @@
         display: block;
         font-size: 0.85rem;
         margin-bottom: 8px;
-        color: #8fa0c0;
+        color: #cc9c3c;
         text-transform: uppercase;
         letter-spacing: 1px;
       }
@@ -107,7 +107,7 @@
         appearance: none;
         width: 100%;
         height: 10px;
-        background: #183848;
+        background: #334466;
         border: 2px solid #090909;
         border-radius: 4px;
         outline: none;
@@ -123,7 +123,7 @@
         height: 24px;
         border: 2px solid #090909;
         border-radius: 12px;
-        background: #7eaffc;
+        background: #ffcc99;
         cursor: pointer;
         box-sizing: border-box;
       }
@@ -134,7 +134,7 @@
         height: 24px;
         border: 2px solid #090909;
         border-radius: 7px;
-        background: #4fc3f7;
+        background: #f3f4f7;
         cursor: pointer;
         box-sizing: border-box;
       }
@@ -198,7 +198,7 @@
           display: block;
           white-space: nowrap;
           text-align: center;
-          color: #50c2f7;
+          color: #cc9c3c;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.04em;
@@ -491,7 +491,7 @@
         if (!audioCtx) {
           initAudio();
           this.textContent = "DISENGAGE SIMULATION";
-          this.style.background = "#ddeeff";
+          this.style.background = "#fcc19f";
           this.style.color = "#0f172a";
           isPlaying = true;
           return;
@@ -500,14 +500,14 @@
         if (audioCtx.state === "suspended") {
           audioCtx.resume().then(() => {
             this.textContent = "DISENGAGE SIMULATION";
-            this.style.background = "#ddeeff";
+            this.style.background = "#fcc19f";
             this.style.color = "#0f172a";
             isPlaying = true;
           });
         } else if (audioCtx.state === "running") {
           audioCtx.suspend().then(() => {
             this.textContent = "ENGAGE SIMULATION";
-            this.style.background = "#4fc3f7";
+            this.style.background = "#cc9c3c";
             this.style.color = "#081828";
             isPlaying = false;
           });
