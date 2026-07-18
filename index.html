@@ -12,7 +12,7 @@
     />
     <style>
       body {
-        background-color: #090909;
+        background-color: #020202;
         color: #cc9c3d;
         font-family:
           "Antonio",
@@ -29,7 +29,7 @@
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
-        --glow-hue: 22deg;
+        --glow-hue: 50deg;
       }
 
       /* Pulsating Ambient Engine Glow Layer */
@@ -374,41 +374,37 @@
           />
         </div>
 
-        <div class="sub-panel">
-          <div class="panel-title">Visual Customization</div>
+        <div class="toggle-container">
+          <label for="glowToggle">Ambient Engine Glow</label>
+          <label class="switch">
+            <input type="checkbox" id="glowToggle" checked />
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
 
-          <div class="toggle-container">
-            <label for="glowToggle">Ambient Engine Glow</label>
-            <label class="switch">
-              <input type="checkbox" id="glowToggle" checked />
-              <span class="slider-toggle"></span>
-            </label>
-          </div>
+        <div class="toggle-container">
+          <label for="starsToggle">Starfield Warp Engine</label>
+          <label class="switch">
+            <input type="checkbox" id="starsToggle" checked />
+            <span class="slider-toggle"></span>
+          </label>
+        </div>
 
-          <div class="toggle-container">
-            <label for="starsToggle">Starfield Warp Engine</label>
-            <label class="switch">
-              <input type="checkbox" id="starsToggle" checked />
-              <span class="slider-toggle"></span>
-            </label>
-          </div>
-
-          <div class="control-group">
-            <label
-              >Glow Core Hue:
-              <span id="glowHueVal" class="value-display"
-                >22° (Orange/Yellow)</span
-              ></label
-            >
-            <input
-              type="range"
-              id="glowHue"
-              min="0"
-              max="360"
-              step="1"
-              value="22"
-            />
-          </div>
+        <div class="control-group">
+          <label
+            >Glow Core Hue:
+            <span id="glowHueVal" class="value-display"
+              >50° (Orange/Yellow)</span
+            ></label
+          >
+          <input
+            type="range"
+            id="glowHue"
+            min="0"
+            max="360"
+            step="1"
+            value="50"
+          />
         </div>
       </div>
     </div>
@@ -712,7 +708,7 @@
         const currentDepthSlider =
           parseFloat(document.getElementById("tremDepth").value) / 100;
 
-        let targetSpeed = isPlaying ? currentSpeedSlider * 4.5 : 0;
+        let targetSpeed = isPlaying ? currentSpeedSlider * 12.0 : 0;
 
         // --- PHASE LOCK PHYSICS ENGINE LOOP ---
         // Grab timeline from AudioContext clock if live, else fall back to a manual timestamp
@@ -729,7 +725,7 @@
           const depthMultiplier = currentDepthSlider * 0.9;
           const visualIntensity = 0.45 + rawSine * depthMultiplier * 0.45;
           const scaleStretch =
-            0.96 + (rawSine + 1) * 0.5 * (currentDepthSlider * 0.08);
+            1.0 + (rawSine + 1) * 0.5 * (currentDepthSlider * 0.08);
 
           glowLayer.style.opacity = visualIntensity;
           glowLayer.style.transform = `scale(${scaleStretch})`;
