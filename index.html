@@ -710,19 +710,15 @@
 
         let targetSpeed = isPlaying ? currentSpeedSlider * 12.0 : 0;
 
-        // --- PHASE LOCK PHYSICS ENGINE LOOP ---
-        // Grab timeline from AudioContext clock if live, else fall back to a manual timestamp
         let timelineClock = audioCtx ? audioCtx.currentTime : baseTimeOffset;
         if (!isPlaying && !audioCtx) baseTimeOffset += 0.016;
 
-        // Compute a pure mathematical Sine calculation ($1.0$ down to $-1.0$)
         const rawSine = Math.sin(
           2 * Math.PI * currentSpeedSlider * timelineClock,
         );
 
-        // Map sine profile precisely onto visual attributes
         if (isPlaying && document.body.classList.contains("glow-enabled")) {
-          const depthMultiplier = currentDepthSlider * 0.9;
+          const depthMultiplier = currentDepthSlider * 0.95;
           const visualIntensity = 0.45 + rawSine * depthMultiplier * 0.45;
           const scaleStretch =
             1.0 + (rawSine + 1) * 0.5 * (currentDepthSlider * 0.08);
@@ -734,7 +730,7 @@
           glowLayer.style.transform = "scale(1)";
         }
 
-        // --- PYGAME STARFIELD RENDERER ---
+        // Stars
         for (let i = 0; i < numStars; i++) {
           let s = stars[i];
           const pxOld = (s.x / s.z) * cx + cx;
