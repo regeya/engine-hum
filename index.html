@@ -40,12 +40,14 @@
         right: 0;
         bottom: 0;
         /* Driven dynamically via JavaScript opacity and transform scaling now */
-        background: radial-gradient(
-          circle,
-          rgba(64, 0, 0, 0) 0%,
-          rgba(130, 0, 0, 0.3) 77%,
-          rgba(200, 0, 0, 0.5) 98%
-        );
+        background:
+          url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://w3.org id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E"),
+          radial-gradient(
+            circle,
+            rgba(64, 0, 0, 0) 0%,
+            rgba(130, 0, 0, 0.3) 77%,
+            rgba(200, 0, 0, 0.5) 98%
+          );
         opacity: 0;
         z-index: -2;
         pointer-events: none;
@@ -317,7 +319,7 @@
 
         <div class="control-group">
           <label
-            >Engine Churn Intensity (modulation level):
+            >Engine Plasma Piston Intensity (modulation level):
             <span id="tremDepthVal" class="value-display">25%</span></label
           >
           <input
@@ -332,7 +334,7 @@
 
         <div class="control-group">
           <label
-            >Engine Hiss:
+            >Engine Hiss Cutoff:
             <span id="filterVal" class="value-display">120 Hz</span></label
           >
           <input
@@ -359,7 +361,7 @@
             value="20"
           />
         </div>
-
+        <!--
         <div class="control-group">
           <label
             >Consoles: <span id="beepVal" class="value-display">0%</span></label
@@ -373,7 +375,7 @@
             value="0"
           />
         </div>
-
+-->
         <div class="toggle-container">
           <label for="glowToggle">Ambient Engine Glow</label>
           <label class="switch">
@@ -640,11 +642,11 @@
         }
       });
 
-      document
-        .getElementById("beepVolume")
-        .addEventListener("input", function (e) {
-          document.getElementById("beepVal").textContent = e.target.value + "%";
-        });
+      //      document
+      //        .getElementById("beepVolume")
+      //        .addEventListener("input", function (e) {
+      //          document.getElementById("beepVal").textContent = e.target.value + "%";
+      //        });
 
       document
         .getElementById("glowToggle")
