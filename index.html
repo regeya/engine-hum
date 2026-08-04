@@ -23,7 +23,7 @@
     <meta property="og:title" content="Engine Hum" />
     <meta
       property="og:description"
-      content="A real-time slaceship engine sounds generator, running in the browser."
+      content="A real-time spaceship engine sounds generator, running in the browser."
     />
     <meta
       property="og:image"
@@ -422,7 +422,7 @@
         </div>
 
         <div class="toggle-container">
-          <label for="starsToggle">Starfield Warp Engine</label>
+          <label for="starsToggle">Starfield Effect</label>
           <label class="switch">
             <input type="checkbox" id="starsToggle" checked />
             <span class="slider-toggle"></span>
@@ -713,15 +713,32 @@
           document.body.style.setProperty("--glow-hue", `${degrees}deg`);
         });
 
-      /* --- PYGAME STARFIELD & HARD-SYNCED ANIMATION LOOP --- */
       const canvas = document.getElementById("starfield");
       const ctx = canvas.getContext("2d");
       const numStars = 200;
       const stars = [];
 
+      const MAX_DEPTH = 1000;
+      let lastTime = performance.now();
+
+      function initStars() {
+        stars.length = 0;
+        const aspect = canvas.width / canvas.height;
+        for (let i = 0; i < numStars; i++) {
+          stars.push({
+            // Spread stars proportional to aspect ratio so distribution stays uniform
+            x: (Math.random() - 0.5) * MAX_DEPTH * Math.max(aspect, 1),
+            y: (Math.random() - 0.5) * MAX_DEPTH * Math.max(1 / aspect, 1),
+            z: Math.random() * MAX_DEPTH,
+            color: `hsl(${200 + Math.random() * 40}, 85%, ${85 + Math.random() * 10}%)`,
+          });
+        }
+      }
+
       function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        initStars();
       }
       window.addEventListener("resize", resizeCanvas);
       resizeCanvas();
@@ -735,11 +752,19 @@
         });
       }
 
-      function animate() {
+      function animate(currentTime) {
+        // Delta time in seconds (capped at 0.1s to prevent huge jumps when switching tabs)
+        const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+        lastTime = currentTime;
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
+
+        // Choose a base focal length tied to the smaller screen dimension
+        // so field-of-view remains consistent across resolutions/aspect ratios
+        const fov = Math.min(canvas.width, canvas.height) * 0.8;
 
         const currentSpeedSlider = parseFloat(
           document.getElementById("tremSpeed").value,
@@ -747,19 +772,17 @@
         const currentDepthSlider =
           parseFloat(document.getElementById("tremDepth").value) / 100;
 
-        let targetSpeed = isPlaying ? currentSpeedSlider * 12.0 : 0;
+        // Scale speed by units/second rather than units/frame
+        let targetSpeed = isPlaying ? currentSpeedSlider * 250.0 : 0;
 
         // --- PHASE LOCK PHYSICS ENGINE LOOP ---
-        // Grab timeline from AudioContext clock if live, else fall back to a manual timestamp
         let timelineClock = audioCtx ? audioCtx.currentTime : baseTimeOffset;
-        if (!isPlaying && !audioCtx) baseTimeOffset += 0.016;
+        if (!isPlaying && !audioCtx) baseTimeOffset += dt;
 
-        // Compute a pure mathematical Sine calculation ($1.0$ down to $-1.0$)
         const rawSine = Math.sin(
           2 * Math.PI * currentSpeedSlider * timelineClock,
         );
 
-        // Map sine profile precisely onto visual attributes
         if (isPlaying && document.body.classList.contains("glow-enabled")) {
           const depthMultiplier = currentDepthSlider * 0.9;
           const visualIntensity = 0.45 + rawSine * depthMultiplier * 0.45;
@@ -773,23 +796,28 @@
           glowLayer.style.transform = "scale(1)";
         }
 
-        // --- PYGAME STARFIELD RENDERER ---
+        // --- RESOLUTION-INDEPENDENT STARFIELD RENDERER ---
+        const aspect = canvas.width / canvas.height;
+
         for (let i = 0; i < numStars; i++) {
           let s = stars[i];
-          const pxOld = (s.x / s.z) * cx + cx;
-          const pyOld = (s.y / s.z) * cy + cy;
 
-          s.z -= targetSpeed;
+          // Project using normalized fov
+          const pxOld = (s.x / s.z) * fov + cx;
+          const pyOld = (s.y / s.z) * fov + cy;
+
+          // Move star using delta time
+          s.z -= targetSpeed * dt;
 
           if (s.z <= 0) {
-            s.x = Math.random() * canvas.width - cx;
-            s.y = Math.random() * canvas.height - cy;
-            s.z = canvas.width;
+            s.x = (Math.random() - 0.5) * MAX_DEPTH * Math.max(aspect, 1);
+            s.y = (Math.random() - 0.5) * MAX_DEPTH * Math.max(1 / aspect, 1);
+            s.z = MAX_DEPTH;
             continue;
           }
 
-          const pxNew = (s.x / s.z) * cx + cx;
-          const pyNew = (s.y / s.z) * cy + cy;
+          const pxNew = (s.x / s.z) * fov + cx;
+          const pyNew = (s.y / s.z) * fov + cy;
 
           if (
             pxNew >= 0 &&
@@ -797,12 +825,14 @@
             pyNew >= 0 &&
             pyNew <= canvas.height
           ) {
-            const size = (1 - s.z / canvas.width) * 2.5;
+            // Scale star rendering size based on depth ratio
+            const size = (1 - s.z / MAX_DEPTH) * 3.0;
+
             ctx.beginPath();
-            if (targetSpeed > 0.5) {
+            if (targetSpeed > 10.0) {
               ctx.moveTo(pxOld, pyOld);
               ctx.lineTo(pxNew, pyNew);
-              ctx.lineWidth = size;
+              ctx.lineWidth = Math.max(0.5, size);
               ctx.strokeStyle = s.color;
               ctx.lineCap = "round";
               ctx.stroke();
@@ -815,8 +845,8 @@
         }
         requestAnimationFrame(animate);
       }
-      requestAnimationFrame(animate);
 
+      requestAnimationFrame(animate);
       document
         .getElementById("starsToggle")
         .addEventListener("change", function (e) {
