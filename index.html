@@ -629,6 +629,7 @@
       document.getElementById("playBtn").addEventListener("click", function () {
         if (!audioCtx) {
           initAudio();
+          // NEW WAY (FPS-Independent Delta Time)
           this.textContent = "DISENGAGE SIMULATION";
           this.style.background = "#fcc19f";
           this.style.color = "#0f172a";
@@ -756,18 +757,18 @@
       resizeCanvas();
 
       function animate(currentTime) {
-        // Calculate delta time in seconds (capped at 0.1s to handle tab switching)
+        if (!lastTime) lastTime = currentTime; // Prevent large spike on first frame
+
+        // Calculate delta time in seconds, clamped to avoid huge jumps on tab switch
         const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
         lastTime = currentTime;
 
-        // Baseline scale factor relative to standard 1080p vertical resolution
         const scaleFactor = canvas.height / 1080;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
-
         const fov = Math.min(canvas.width, canvas.height) * 0.8;
 
         const currentSpeedSlider = parseFloat(
@@ -776,8 +777,8 @@
         const currentDepthSlider =
           parseFloat(document.getElementById("tremDepth").value) / 100;
 
-        let targetSpeed = isPlaying ? currentSpeedSlider * 250.0 : 0;
-
+        // Scale target speed relative to a 1-second interval
+        let targetSpeed = isPlaying ? currentSpeedSlider * 450.0 : 0;
         // --- PHASE LOCK PHYSICS ENGINE LOOP ---
         let timelineClock = audioCtx ? audioCtx.currentTime : baseTimeOffset;
         if (!isPlaying && !audioCtx) baseTimeOffset += dt;
@@ -805,8 +806,9 @@
         for (let i = 0; i < numStars; i++) {
           let s = stars[i];
 
-          const pxOld = (s.x / s.z) * fov + cx;
-          const pyOld = (s.y / s.z) * fov + cy;
+          const virtualOldZ = s.z + targetSpeed * 0.016;
+          const pxOld = (s.x / virtualOldZ) * fov + cx;
+          const pyOld = (s.y / virtualOldZ) * fov + cy;
 
           s.z -= targetSpeed * dt;
 
