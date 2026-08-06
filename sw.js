@@ -2,8 +2,10 @@ const CACHE_NAME = "v1";
 const ASSETS = [
   "/",
   "/index.html",
-  "/app.js", // your main JS file
   "/manifest.json",
+  "favicon-32x32.png",
+  "icon-192.png",
+  "icon-512.png"
 ];
 
 // Install Event (Cache Assets)
@@ -22,4 +24,4 @@ self.addEventListener("fetch", (event) => {
       return response || fetch(event.request);
     }),
   );
-});
+
