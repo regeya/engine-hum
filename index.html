@@ -62,13 +62,12 @@
         justify-content: center;
         min-height: 100vh;
         margin: 0;
-        padding: clamp(10px, 4vh, 40px);
+        padding: 0; /* Let flex centering handle alignment within bounds */
         box-sizing: border-box;
         position: relative;
         overflow: hidden;
         --glow-hue: 50deg;
       }
-
       /* Pulsating Ambient Engine Glow Layer */
       #glow-layer {
         position: absolute;
@@ -116,29 +115,38 @@
 
       .app-container {
         width: 100%;
+        height: 100vh;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         z-index: 1;
-        gap: clamp(5px, 2vh, 20px);
       }
 
       .card {
-        width: 100%;
-        max-width: 600px;
+        /* Restrict horizontal space to 90% viewport width or 600px maximum */
+        width: min(600px, 90vw);
+        /* Restrict vertical space to 90% viewport height */
+        max-height: 90vh;
         box-sizing: border-box;
         container-type: inline-size;
         background-color: #040404;
         border: 3px solid #001122;
         border-radius: 20px;
-        padding: clamp(15px, 3.5vh, 35px);
+        /* Fluid padding tied to viewport height */
+        padding: clamp(10px, 3vh, 30px);
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
         transition:
           opacity 0.3s ease,
           transform 0.3s ease,
           visibility 0.3s;
-      }
 
+        /* Flexbox arrangement to keep controls fitting vertically */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-evenly;
+        overflow-y: auto; /* Fallback safety scroll for extreme edge-cases */
+      }
       .card.hidden {
         opacity: 0;
         visibility: hidden;
@@ -172,7 +180,7 @@
       }
 
       .control-group {
-        margin-bottom: clamp(8px, 2vh, 20px);
+        margin-bottom: clamp(2px, 1.2vh, 16px);
       }
 
       .sub-panel {
@@ -193,7 +201,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: clamp(8px, 1.5vh, 15px);
+        margin-bottom: clamp(2px, 1.2vh, 12px);
       }
 
       .switch {
@@ -304,7 +312,7 @@
 
       .text-fit-container {
         width: 100%;
-        margin-bottom: clamp(15px, 3vh, 30px);
+        margin-bottom: clamp(6px, 2vh, 20px);
       }
 
       .text-fit {
@@ -322,6 +330,19 @@
         text-transform: uppercase;
         letter-spacing: 0.04em;
         user-select: none;
+      }
+
+      @media (max-height: 720px) {
+        .card {
+          transform: scale(0.85);
+          transform-origin: center center;
+        }
+      }
+
+      @media (max-height: 580px) {
+        .card {
+          transform: scale(0.72);
+        }
       }
     </style>
   </head>
@@ -447,7 +468,6 @@
         </div>
       </div>
     </div>
-
     <script>
       function fitText(el) {
         const parent = el.parentElement;
@@ -513,7 +533,7 @@
           f.Q.value = 0.5;
         });
 
-        tremoloGain = audioGain = audioCtx.createGain();
+        tremoloGain = audioCtx.createGain();
         tremoloGain.gain.value = 0.5;
 
         tremoloLFO = audioCtx.createOscillator();
@@ -567,9 +587,8 @@
       }
 
       function playConsoleBeep() {
-        const beepVolPct = parseFloat(
-          document.getElementById("beepVolume").value,
-        );
+        const beepVolElem = document.getElementById("beepVolume");
+        const beepVolPct = beepVolElem ? parseFloat(beepVolElem.value) : 0;
         if (!audioCtx || audioCtx.state !== "running" || beepVolPct === 0)
           return;
 
@@ -679,12 +698,6 @@
         }
       });
 
-      //      document
-      //        .getElementById("beepVolume")
-      //        .addEventListener("input", function (e) {
-      //          document.getElementById("beepVal").textContent = e.target.value + "%";
-      //        });
-
       document
         .getElementById("glowToggle")
         .addEventListener("change", function (e) {
@@ -726,7 +739,6 @@
         const aspect = canvas.width / canvas.height;
         for (let i = 0; i < numStars; i++) {
           stars.push({
-            // Spread stars proportional to aspect ratio so distribution stays uniform
             x: (Math.random() - 0.5) * MAX_DEPTH * Math.max(aspect, 1),
             y: (Math.random() - 0.5) * MAX_DEPTH * Math.max(1 / aspect, 1),
             z: Math.random() * MAX_DEPTH,
@@ -743,27 +755,19 @@
       window.addEventListener("resize", resizeCanvas);
       resizeCanvas();
 
-      for (let i = 0; i < numStars; i++) {
-        stars.push({
-          x: Math.random() * canvas.width - canvas.width / 2,
-          y: Math.random() * canvas.height - canvas.height / 2,
-          z: Math.random() * canvas.width,
-          color: `hsl(${200 + Math.random() * 40}, 85%, ${85 + Math.random() * 10}%)`,
-        });
-      }
-
       function animate(currentTime) {
-        // Delta time in seconds (capped at 0.1s to prevent huge jumps when switching tabs)
+        // Calculate delta time in seconds (capped at 0.1s to handle tab switching)
         const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
         lastTime = currentTime;
+
+        // Baseline scale factor relative to standard 1080p vertical resolution
+        const scaleFactor = canvas.height / 1080;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
 
-        // Choose a base focal length tied to the smaller screen dimension
-        // so field-of-view remains consistent across resolutions/aspect ratios
         const fov = Math.min(canvas.width, canvas.height) * 0.8;
 
         const currentSpeedSlider = parseFloat(
@@ -772,7 +776,6 @@
         const currentDepthSlider =
           parseFloat(document.getElementById("tremDepth").value) / 100;
 
-        // Scale speed by units/second rather than units/frame
         let targetSpeed = isPlaying ? currentSpeedSlider * 250.0 : 0;
 
         // --- PHASE LOCK PHYSICS ENGINE LOOP ---
@@ -802,11 +805,9 @@
         for (let i = 0; i < numStars; i++) {
           let s = stars[i];
 
-          // Project using normalized fov
           const pxOld = (s.x / s.z) * fov + cx;
           const pyOld = (s.y / s.z) * fov + cy;
 
-          // Move star using delta time
           s.z -= targetSpeed * dt;
 
           if (s.z <= 0) {
@@ -818,26 +819,25 @@
 
           const pxNew = (s.x / s.z) * fov + cx;
           const pyNew = (s.y / s.z) * fov + cy;
-
           if (
             pxNew >= 0 &&
             pxNew <= canvas.width &&
             pyNew >= 0 &&
             pyNew <= canvas.height
           ) {
-            // Scale star rendering size based on depth ratio
-            const size = (1 - s.z / MAX_DEPTH) * 3.0;
+            const baseSize = (1 - s.z / MAX_DEPTH) * 3.5 * scaleFactor;
+            const renderSize = Math.max(0.5, baseSize);
 
             ctx.beginPath();
             if (targetSpeed > 10.0) {
               ctx.moveTo(pxOld, pyOld);
               ctx.lineTo(pxNew, pyNew);
-              ctx.lineWidth = Math.max(0.5, size);
+              ctx.lineWidth = renderSize;
               ctx.strokeStyle = s.color;
               ctx.lineCap = "round";
               ctx.stroke();
             } else {
-              ctx.arc(pxNew, pyNew, Math.max(0.5, size / 2), 0, Math.PI * 2);
+              ctx.arc(pxNew, pyNew, renderSize / 2, 0, Math.PI * 2);
               ctx.fillStyle = s.color;
               ctx.fill();
             }
@@ -847,6 +847,7 @@
       }
 
       requestAnimationFrame(animate);
+
       document
         .getElementById("starsToggle")
         .addEventListener("change", function (e) {
