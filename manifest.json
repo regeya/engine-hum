@@ -13,7 +13,6 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": "/engine-hum",
   "background_color": "#ffffff",
   "display": "standalone",
   "theme_color": "#0078d4"
