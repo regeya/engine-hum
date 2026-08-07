@@ -14,6 +14,7 @@
     }
   ],
   "background_color": "#ffffff",
+  "display_override": ["fullscreen", "minimal-ui"],
   "display": "standalone",
   "theme_color": "#252525"
 }
