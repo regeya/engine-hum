@@ -347,11 +347,44 @@
           transform: scale(0.72);
         }
       }
+
+  #tauri-close-btn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.75);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+    opacity: 1;
+  }
+
+  #tauri-close-btn:hover {
+    background: #e63946;
+    transform: scale(1.1);
+  }
+
+  /* Hidden state when mouse stops moving */
+  #tauri-close-btn.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+</style>
     </style>
   </head>
   <body class="glow-enabled stars-enabled">
     <div id="glow-layer"></div>
     <canvas id="starfield"></canvas>
+    <button id="tauri-close-btn" class="hidden">✕</button>
 
     <div class="app-container">
       <div class="card">
@@ -880,6 +913,60 @@
       card.addEventListener("click", (e) => {
         e.stopPropagation();
       });
+document.addEventListener('DOMContentLoaded', () => {
+  const isTauri = typeof window.__TAURI_INTERNALS__ !== 'undefined' || typeof window.__TAURI__ !== 'undefined';
+  const closeBtn = document.getElementById('tauri-close-btn');
+
+  if (!isTauri) {
+    closeBtn?.remove();
+    return;
+  }
+
+  let hideTimeout;
+
+  const handleMouseMove = () => {
+    closeBtn.classList.remove('hidden');
+    clearTimeout(hideTimeout);
+    
+    hideTimeout = setTimeout(() => {
+      closeBtn.classList.add('hidden');
+    }, 2500);
+  };
+
+  window.addEventListener('mousemove', handleMouseMove);
+
+  closeBtn.addEventListener('click', async (e) => {
+    // 1. Stop click from reaching document.body (prevents toggling the UI card)
+    e.stopPropagation();
+
+    // 2. Fully exit the Tauri application process
+    try {
+      // Tauri v2 Process Plugin
+      if (window.__TAURI__?.process) {
+        await window.__TAURI__.process.exit(0);
+      } 
+      // Tauri v1 Process API
+      else if (window.__TAURI__?.process?.exit) {
+        await window.__TAURI__.process.exit(0);
+      }
+      // Fallback window close if process API is restricted
+      else if (window.__TAURI__?.window) {
+        const { getCurrentWindow } = window.__TAURI__.window;
+        await getCurrentWindow().close();
+      } else if (window.__TAURI__?.appWindow) {
+        await window.__TAURI__.appWindow.close();
+      } else {
+        window.close();
+      }
+    } catch (err) {
+      console.error('Failed to exit application:', err);
+      // Fallback close
+      if (window.__TAURI__?.window) {
+        await window.__TAURI__.window.getCurrentWindow().close();
+      }
+    }
+  });
+});
     </script>
   </body>
 </html>
