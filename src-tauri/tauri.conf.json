@@ -1,10 +1,10 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Engine Hum",
+  "productName": "EngineHum",
   "version": "0.1.0",
   "identifier": "org.regeya.enginehum",
   "build": {
-    "frontendDist": "../html"
+    "frontendDist": "./html"
   },
   "app": {
     "withGlobalTauri": true,

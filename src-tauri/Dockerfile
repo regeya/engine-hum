@@ -43,8 +43,12 @@ RUN cargo install tauri-cli
 COPY . .
 
 # Build the AppImage
+
+ENV APPIMAGE_EXTRACT_AND_RUN=1
+
+RUN cargo clean
 RUN cargo tauri build
 
 # Step 2: Output Container to hold the binary
-FROM scratch AS artifacts
+FROM scratch AS export
 COPY --from=builder /app/src-tauri/target/release/bundle/appimage/ /
