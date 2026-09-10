@@ -2,7 +2,7 @@
 name = "engine-hum"
 version = "0.1.2"
 description = "Engine Hum"
-authors = ["you"]
+authors = ["Shane Simmons <regeya@gmail.com>"]
 license = ""
 repository = ""
 edition = "2021"

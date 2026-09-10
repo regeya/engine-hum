@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
     pkg-config \
+    patchelf \
     libglib2.0-dev \
     libgstreamer1.0-dev \
     libgstreamer-plugins-base1.0-dev \
@@ -47,7 +48,7 @@ COPY . .
 ENV APPIMAGE_EXTRACT_AND_RUN=1
 
 RUN cargo clean
-RUN cargo tauri build
+RUN cargo tauri build --verbose
 
 # Step 2: Output Container to hold the binary
 FROM scratch AS export
