@@ -1,5 +1,5 @@
 # Step 1: Build Environment
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:26.04 AS builder
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -46,10 +46,11 @@ COPY . .
 # Build the AppImage
 
 ENV APPIMAGE_EXTRACT_AND_RUN=1
+ENV LDA_EXCLUDE_LIB="libEGL;libGL;libGLESv2;libgallium_dri;libgbm;libdrm"
 
 RUN cargo clean
 RUN cargo tauri build --verbose
 
 # Step 2: Output Container to hold the binary
 FROM scratch AS export
-COPY --from=builder /app/src-tauri/target/release/bundle/appimage/ /
+COPY --from=builder /app/target/release/bundle/appimage/ /
